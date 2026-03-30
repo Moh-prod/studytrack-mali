@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>StudyTrack Mali - Niveau 2</title>
+  <style>
+    body { font-family: Arial; background:#f4f6f9; }
+    .container { max-width:500px; margin:50px auto; background:white; padding:20px; border-radius:10px; }
+    input, button { width:100%; padding:10px; margin-top:10px; }
+    button { background:#007bff; color:white; border:none; }
+    li { background:#eee; margin-top:10px; padding:10px; display:flex; justify-content:space-between; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2>📚 StudyTrack Mali (Niveau 2)</h2>
+
+  <input type="text" id="taskInput" placeholder="Tâche...">
+  <input type="date" id="dateInput">
+  <button onclick="addTask()">Ajouter</button>
+
+  <h3>Mes tâches</h3>
+  <ul id="taskList"></ul>
+</div>
+
+<script>
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+function save() {
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+function renderTasks() {
+  const list = document.getElementById("taskList");
+  list.innerHTML = "";
+
+  tasks.sort((a,b)=> new Date(a.date)-new Date(b.date));
+
+  tasks.forEach((task,index)=>{
+    const li = document.createElement("li");
+
+    const today = new Date().toISOString().split("T")[0];
+    let color = task.date < today ? "red" : "black";
+
+    li.innerHTML = `
+      <span style="color:${color}">${task.text} (${task.date})</span>
+      <div>
+        <button onclick="markDone(${index})">✔</button>
+        <button onclick="deleteTask(${index})">X</button>
+      </div>
+    `;
+
+    list.appendChild(li);
+  });
+}
+
+function addTask() {
+  const text = document.getElementById("taskInput").value;
+  const date = document.getElementById("dateInput").value;
+
+  if(!text || !date){ alert("Remplis tout"); return; }
+
+  tasks.push({text, date, done:false});
+  save();
+  renderTasks();
+}
+
+function deleteTask(i){
+  tasks.splice(i,1);
+  save();
+  renderTasks();
+}
+
+function markDone(i){
+  tasks[i].text = "✔ " + tasks[i].text;
+  save();
+  renderTasks();
+}
+
+// Notification simple
+setInterval(()=>{
+  const today = new Date().toISOString().split("T")[0];
+  tasks.forEach(t=>{
+    if(t.date === today){
+      alert("Tâche aujourd'hui: " + t.text);
+    }
+  });
+}, 60000);
+
+renderTasks();
+</script>
+</body>
+</html>
