@@ -1,93 +1,173 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>StudyTrack Mali - Niveau 2</title>
-  <style>
-    body { font-family: Arial; background:#f4f6f9; }
-    .container { max-width:500px; margin:50px auto; background:white; padding:20px; border-radius:10px; }
-    input, button { width:100%; padding:10px; margin-top:10px; }
-    button { background:#007bff; color:white; border:none; }
-    li { background:#eee; margin-top:10px; padding:10px; display:flex; justify-content:space-between; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyTrack Mali - Niveau 3</title>
+
+<style>
+:root {
+  --primary:#4CAF50;
+  --bg:#f4f6f9;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  margin:0;
+}
+
+.container {
+  max-width:600px;
+  margin:auto;
+  padding:15px;
+}
+
+.card {
+  background:white;
+  padding:15px;
+  border-radius:15px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+h2 {
+  text-align:center;
+}
+
+input, button {
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border-radius:10px;
+  border:1px solid #ddd;
+  font-size:16px;
+}
+
+button {
+  background:var(--primary);
+  color:white;
+  border:none;
+}
+
+ul { padding:0; }
+
+li {
+  list-style:none;
+  background:#fff;
+  margin-top:10px;
+  padding:12px;
+  border-radius:10px;
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+
+.task-top {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.actions button {
+  width:auto;
+  padding:5px 10px;
+  margin-left:5px;
+}
+
+.done { text-decoration: line-through; color:gray; }
+
+@media(max-width:600px){
+  .container { padding:10px; }
+}
+</style>
 </head>
+
 <body>
 <div class="container">
-  <h2>📚 StudyTrack Mali (Niveau 2)</h2>
+  <div class="card">
+    <h2>📚 StudyTrack Mali</h2>
 
-  <input type="text" id="taskInput" placeholder="Tâche...">
-  <input type="date" id="dateInput">
-  <button onclick="addTask()">Ajouter</button>
+    <input id="taskInput" placeholder="Ajouter une tâche">
+    <input type="date" id="dateInput">
+    <button onclick="addTask()">Ajouter</button>
 
-  <h3>Mes tâches</h3>
-  <ul id="taskList"></ul>
+    <ul id="taskList"></ul>
+  </div>
 </div>
 
 <script>
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
-function save() {
+function save(){
   localStorage.setItem("tasks", JSON.stringify(tasks));
 }
 
-function renderTasks() {
+function render(){
   const list = document.getElementById("taskList");
   list.innerHTML = "";
 
   tasks.sort((a,b)=> new Date(a.date)-new Date(b.date));
 
-  tasks.forEach((task,index)=>{
+  const today = new Date().toISOString().split("T")[0];
+
+  tasks.forEach((t,i)=>{
     const li = document.createElement("li");
 
-    const today = new Date().toISOString().split("T")[0];
-    let color = task.date < today ? "red" : "black";
+    let color = t.date < today && !t.done ? "red" : "black";
 
     li.innerHTML = `
-      <span style="color:${color}">${task.text} (${task.date})</span>
-      <div>
-        <button onclick="markDone(${index})">✔</button>
-        <button onclick="deleteTask(${index})">X</button>
+      <div class="task-top">
+        <span class="${t.done ? 'done':''}" style="color:${color}">${t.text}</span>
+        <div class="actions">
+          <button onclick="toggle(${i})">✔</button>
+          <button onclick="del(${i})">X</button>
+        </div>
       </div>
+      <small>${t.date}</small>
     `;
 
     list.appendChild(li);
   });
 }
 
-function addTask() {
-  const text = document.getElementById("taskInput").value;
-  const date = document.getElementById("dateInput").value;
+function addTask(){
+  const text = taskInput.value;
+  const date = dateInput.value;
 
   if(!text || !date){ alert("Remplis tout"); return; }
 
   tasks.push({text, date, done:false});
+  taskInput.value="";
+  dateInput.value="";
   save();
-  renderTasks();
+  render();
 }
 
-function deleteTask(i){
+function del(i){
   tasks.splice(i,1);
   save();
-  renderTasks();
+  render();
 }
 
-function markDone(i){
-  tasks[i].text = "✔ " + tasks[i].text;
+function toggle(i){
+  tasks[i].done = !tasks[i].done;
   save();
-  renderTasks();
+  render();
 }
 
-// Notification simple
+// Notification simple améliorée
 setInterval(()=>{
   const today = new Date().toISOString().split("T")[0];
   tasks.forEach(t=>{
-    if(t.date === today){
-      alert("Tâche aujourd'hui: " + t.text);
+    if(t.date === today && !t.notified){
+      alert("Aujourd'hui: " + t.text);
+      t.notified = true;
+      save();
     }
   });
 }, 60000);
 
-renderTasks();
+render();
 </script>
 </body>
 </html>
