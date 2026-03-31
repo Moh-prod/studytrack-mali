@@ -103,10 +103,15 @@ li {
 const app = firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
-let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
-function save(){
-  localStorage.setItem("tasks", JSON.stringify(tasks));
+function addTask(){
+  const user = auth.currentUser;
+
+  db.collection("tasks").add({
+    uid: user.uid,
+    text: taskInput.value,
+    date: dateInput.value
+  });
 }
 
 function signup(email, password){
