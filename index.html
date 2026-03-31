@@ -99,7 +99,6 @@ li {
 </div>
 
 <script>
-
 const firebaseConfig = {
   apiKey: "AIzaSyCRXQYiWlIaZi3Mmkf1Zqy2TVfCCL8IdaA",
   authDomain: "studytrack-mali.firebaseapp.com",
@@ -110,43 +109,91 @@ const firebaseConfig = {
   measurementId: "G-GSM74L3EPE"
 };
 
-const app = firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-function addTask(){
-  const user = auth.currentUser;
+let tasks = [];
 
-  db.collection("tasks").add({
-    uid: user.uid,
-    text: taskInput.value,
-    date: dateInput.value
-  });
-}
-
-function signup(email, password){
+function signup(){
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
   auth.createUserWithEmailAndPassword(email, password)
     .then(()=> alert("Compte créé"))
     .catch(err=> alert(err.message));
 }
 
-function login(email, password){
+function login(){
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
   auth.signInWithEmailAndPassword(email, password)
     .then(()=> alert("Connecté"))
     .catch(err=> alert(err.message));
 }
 
+function addTask(){
+  const user = auth.currentUser;
+  const text = document.getElementById("taskInput").value;
+  const date = document.getElementById("dateInput").value;
+  if(!text || !date) { alert("Remplis tout"); return; }
+  db.collection("tasks").add({
+    uid: user.uid,
+    text,
+    date,
+    done: false,
+    notified: false
+  });
+  document.getElementById("taskInput").value = "";
+  document.getElementById("dateInput").value = "";
+}
+
+function del(i){
+  const task = tasks[i];
+  // Cherche le document correspondant
+  db.collection("tasks")
+    .where("uid", "==", auth.currentUser.uid)
+    .where("text", "==", task.text)
+    .where("date", "==", task.date)
+    .get()
+    .then(snapshot => {
+      snapshot.forEach(doc => {
+        doc.ref.delete();
+      });
+    });
+}
+
+function toggle(i){
+  const task = tasks[i];
+  db.collection("tasks")
+    .where("uid", "==", auth.currentUser.uid)
+    .where("text", "==", task.text)
+    .where("date", "==", task.date)
+    .get()
+    .then(snapshot => {
+      snapshot.forEach(doc => {
+        doc.ref.update({ done: !task.done });
+      });
+    });
+}
+
 auth.onAuthStateChanged(user => {
   if(user){
+    document.getElementById("auth").style.display = "none";
     db.collection("tasks")
       .where("uid","==",user.uid)
       .onSnapshot(snapshot=>{
         tasks = [];
         snapshot.forEach(doc=>{
-          tasks.push(doc.data());
+          let data = doc.data();
+          data._docId = doc.id;
+          tasks.push(data);
         });
         render();
       });
+  } else {
+    document.getElementById("auth").style.display = "block";
+    tasks = [];
+    render();
   }
 });
 
@@ -154,13 +201,16 @@ function render(){
   const list = document.getElementById("taskList");
   list.innerHTML = "";
 
-  tasks.sort((a,b)=> new Date(a.date)-new Date(b.date));
+  if (!auth.currentUser) {
+    list.innerHTML = "<li>Connecte-toi pour voir tes tâches</li>";
+    return;
+  }
 
+  tasks.sort((a,b)=> new Date(a.date)-new Date(b.date));
   const today = new Date().toISOString().split("T")[0];
 
   tasks.forEach((t,i)=>{
     const li = document.createElement("li");
-
     let color = t.date < today && !t.done ? "red" : "black";
 
     li.innerHTML = `
@@ -173,49 +223,30 @@ function render(){
       </div>
       <small>${t.date}</small>
     `;
-
     list.appendChild(li);
   });
 }
 
-function addTask(){
-  const text = taskInput.value;
-  const date = dateInput.value;
-
-  if(!text || !date){ alert("Remplis tout"); return; }
-
-  tasks.push({text, date, done:false});
-  taskInput.value="";
-  dateInput.value="";
-  save();
-  render();
-}
-
-function del(i){
-  tasks.splice(i,1);
-  save();
-  render();
-}
-
-function toggle(i){
-  tasks[i].done = !tasks[i].done;
-  save();
-  render();
-}
-
-// Notification simple améliorée
+// Notification avec Firestore
 setInterval(()=>{
   const today = new Date().toISOString().split("T")[0];
-  tasks.forEach(t=>{
+  tasks.forEach((t, i)=>{
     if(t.date === today && !t.notified){
       alert("Aujourd'hui: " + t.text);
-      t.notified = true;
-      save();
+      // On met à jour la notification
+      db.collection("tasks")
+        .where("uid", "==", auth.currentUser.uid)
+        .where("text", "==", t.text)
+        .where("date", "==", t.date)
+        .get()
+        .then(snapshot => {
+          snapshot.forEach(doc => {
+            doc.ref.update({ notified: true });
+          });
+        });
     }
   });
 }, 60000);
-
-render();
 </script>
 </body>
 </html>
