@@ -109,6 +109,18 @@ function save(){
   localStorage.setItem("tasks", JSON.stringify(tasks));
 }
 
+function signup(email, password){
+  auth.createUserWithEmailAndPassword(email, password)
+    .then(()=> alert("Compte créé"))
+    .catch(err=> alert(err.message));
+}
+
+function login(email, password){
+  auth.signInWithEmailAndPassword(email, password)
+    .then(()=> alert("Connecté"))
+    .catch(err=> alert(err.message));
+}
+
 function render(){
   const list = document.getElementById("taskList");
   list.innerHTML = "";
