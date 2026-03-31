@@ -126,6 +126,20 @@ function login(email, password){
     .catch(err=> alert(err.message));
 }
 
+auth.onAuthStateChanged(user => {
+  if(user){
+    db.collection("tasks")
+      .where("uid","==",user.uid)
+      .onSnapshot(snapshot=>{
+        tasks = [];
+        snapshot.forEach(doc=>{
+          tasks.push(doc.data());
+        });
+        render();
+      });
+  }
+});
+
 function render(){
   const list = document.getElementById("taskList");
   list.innerHTML = "";
