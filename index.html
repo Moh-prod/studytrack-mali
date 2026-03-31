@@ -234,30 +234,29 @@
 
   // Rendu des tâches
   function render() {
-    const list = document.getElementById("taskList");
-    list.innerHTML = "";
-    if (!auth.currentUser) {
-      list.innerHTML = "<li>Connecte-toi pour voir tes tâches.</li>";
-      return;
-    }
-
-    const today = new Date().toISOString().split("T")[0];
-    tasks.forEach((t, i) => {
-      const li = document.createElement("li");
-      let color = t.date < today && !t.done ? "red" : "black";
-      li.innerHTML = `
-        <div class="task-top">
-          <span class="${t.done ? "done" : ""}" style="color:${color}">${t.text}</span>
-          <div class="actions">
-            <button onclick="toggle(${i})">✔</button>
-            <button onclick="del(${i})">X</button>
-          </div>
-        </div>
-        <small>${t.date}</small>
-      `;
-      list.appendChild(li);
-    });
+  const list = document.getElementById("taskList");
+  list.innerHTML = "";
+  if (!tasks || tasks.length === 0) {
+    list.innerHTML = "<li>Aucune tâche trouvée.</li>";
+    return;
   }
+  const today = new Date().toISOString().split("T")[0];
+  tasks.forEach((t, i) => {
+    const li = document.createElement("li");
+    let color = t.date < today && !t.done ? "red" : "black";
+    li.innerHTML = `
+      <div class="task-top">
+        <span class="${t.done ? "done" : ""}" style="color:${color}">${t.text}</span>
+        <div class="actions">
+          <button onclick="toggle(${i})">✔</button>
+          <button onclick="del(${i})">X</button>
+        </div>
+      </div>
+      <small>${t.date}</small>
+    `;
+    list.appendChild(li);
+  });
+}
 
   // Notifications (alert) si la tâche "du jour" n'est pas encore notifiée
   setInterval(() => {
