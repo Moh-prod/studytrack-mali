@@ -1,279 +1,266 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StudyTrack Mali - Niveau 3</title>
-  <!-- Remplace les trois <script> Firebase du haut par celles-ci -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyTrack Mali Pro</title>
+
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-  <style>
-    :root {
-      --primary:#4CAF50;
-      --bg:#f4f6f9;
-    }
-    body {
-      font-family: Arial, sans-serif;
-      background: var(--bg);
-      margin:0;
-    }
-    .container {
-      max-width:600px;
-      margin:auto;
-      padding:15px;
-    }
-    .card {
-      background:white;
-      padding:15px;
-      border-radius:15px;
-      box-shadow:0 5px 15px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-    }
-    h2, h3 {
-      text-align:center;
-    }
-    input, button {
-      width:100%;
-      padding:12px;
-      margin-top:10px;
-      border-radius:10px;
-      border:1px solid #ddd;
-      font-size:16px;
-      box-sizing: border-box;
-    }
-    button {
-      background:var(--primary);
-      color:white;
-      border:none;
-      cursor: pointer;
-    }
-    button[disabled] {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    ul { padding:0; }
-    li {
-      list-style:none;
-      background:#fff;
-      margin-top:10px;
-      padding:12px;
-      border-radius:10px;
-      display:flex;
-      flex-direction:column;
-      gap:5px;
-    }
-    .task-top {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-    }
-    .actions button {
-      width:auto;
-      padding:5px 10px;
-      margin-left:5px;
-      font-size: 16px;
-    }
-    .done { text-decoration: line-through; color:gray; }
-    .hide { display: none !important; }
-    @media(max-width:600px){
-      .container { padding:10px; }
-    }
-  </style>
+
+<style>
+:root {
+  --primary:#4CAF50;
+  --bg:#f4f6f9;
+}
+
+body {
+  font-family: 'Segoe UI', Arial;
+  background: var(--bg);
+  margin:0;
+}
+
+.container {
+  max-width:600px;
+  margin:auto;
+  padding:15px;
+}
+
+.card {
+  background:white;
+  padding:20px;
+  border-radius:20px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.1);
+  margin-bottom:20px;
+  animation: fadeIn 0.5s ease;
+}
+
+h2, h3 { text-align:center; }
+
+input, select, button {
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border-radius:10px;
+  border:1px solid #ddd;
+  font-size:16px;
+}
+
+input:focus {
+  outline:none;
+  border:2px solid var(--primary);
+}
+
+button {
+  background:var(--primary);
+  color:white;
+  border:none;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+button:hover { transform:scale(1.05); }
+
+li {
+  list-style:none;
+  background:#fff;
+  margin-top:10px;
+  padding:12px;
+  border-radius:12px;
+  display:flex;
+  flex-direction:column;
+}
+
+.task-top {
+  display:flex;
+  justify-content:space-between;
+}
+
+.actions button {
+  width:auto;
+  padding:5px 10px;
+}
+
+.done { text-decoration:line-through; color:gray; }
+.hide { display:none; }
+
+#stats {
+  margin-top:15px;
+  text-align:center;
+  font-weight:bold;
+}
+
+@keyframes fadeIn {
+  from {opacity:0; transform:translateY(10px);} 
+  to {opacity:1; transform:translateY(0);} 
+}
+</style>
 </head>
 
 <body>
 <div class="container">
 
-  <div id="auth" class="card">
-    <h3>Connexion ou inscription</h3>
-    <input id="email" type="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Mot de passe">
-    <button id="btn-login" onclick="login()">Connexion</button>
-    <button id="btn-signup" onclick="signup()">Inscription</button>
-    <div id="auth-error" style="color:red;text-align:center;margin-top:8px;"></div>
-  </div>
+<div id="auth" class="card">
+<h3>Connexion</h3>
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Mot de passe">
+<button onclick="login()">Connexion</button>
+<button onclick="signup()">Créer compte</button>
+<div id="auth-error" style="color:red;text-align:center"></div>
+</div>
 
-  <div id="todo" class="card hide">
-    <h2>📚 StudyTrack Mali</h2>
-    <input id="taskInput" placeholder="Ajouter une tâche">
-    <input type="date" id="dateInput">
-    <button onclick="addTask()">Ajouter</button>
-    <ul id="taskList"></ul>
-    <button onclick="logout()" style="background:#f44336;">Déconnexion</button>
-  </div>
+<div id="todo" class="card hide">
+<h2>📚 StudyTrack Mali</h2>
+
+<input id="taskInput" placeholder="Ajouter une tâche">
+<input type="date" id="dateInput">
+<button onclick="addTask()">Ajouter</button>
+
+<select id="filter" onchange="render()">
+<option value="all">Toutes</option>
+<option value="done">Terminées</option>
+<option value="pending">En cours</option>
+</select>
+
+<ul id="taskList"></ul>
+<div id="stats"></div>
+
+<button onclick="logout()" style="background:red">Déconnexion</button>
+</div>
 
 </div>
 
 <script>
-  // ----- CONFIG FIREBASE -----
-  const firebaseConfig = {
-    apiKey: "AIzaSyCRXQYiWlIaZi3Mmkf1Zqy2TVfCCL8IdaA",
-    authDomain: "studytrack-mali.firebaseapp.com",
-    projectId: "studytrack-mali",
-    storageBucket: "studytrack-mali.appspot.com",
-    messagingSenderId: "62559775116",
-    appId: "1:62559775116:web:c73319b73905b3fc56cea9",
-    measurementId: "G-GSM74L3EPE"
-  };
+const firebaseConfig = {
+ apiKey: "AIzaSyCRXQYiWlIaZi3Mmkf1Zqy2TVfCCL8IdaA",
+ authDomain: "studytrack-mali.firebaseapp.com",
+ projectId: "studytrack-mali"
+};
 
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-  let tasks = []; // Liste locale pour le rendu
+const authDiv = document.getElementById("auth");
+const todoDiv = document.getElementById("todo");
+const taskList = document.getElementById("taskList");
+const stats = document.getElementById("stats");
 
-  // Signup & Login/Logout
-  function clearAuthError() {
-    document.getElementById("auth-error").textContent = "";
-  }
-  function showAuthError(msg) {
-    document.getElementById("auth-error").textContent = msg;
-  }
+let tasks = [];
 
-  function signup() {
-    clearAuthError();
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-    if (!email || !password) {
-      showAuthError("Remplir email et mot de passe");
-      return;
-    }
-    auth.createUserWithEmailAndPassword(email, password)
-      .then(() => {
-        showAuthError(""); 
-        alert("Compte créé, vous pouvez ajouter des tâches !");
-      })
-      .catch(err => showAuthError(err.message));
-  }
-
-  function login() {
-    clearAuthError();
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-    if (!email || !password) {
-      showAuthError("Remplir email et mot de passe");
-      return;
-    }
-    auth.signInWithEmailAndPassword(email, password)
-      .then(() => {
-        showAuthError("");
-      })
-      .catch(err => showAuthError(err.message));
-  }
-
-  function logout() {
-    auth.signOut();
-  }
-
-  // Ajout de tâche
-  function addTask() {
-    const user = auth.currentUser;
-    if (!user) return;
-    const text = document.getElementById("taskInput").value.trim();
-    const date = document.getElementById("dateInput").value;
-    if (!text || !date) {
-      alert("Remplir la tâche et la date !");
-      return;
-    }
-    db.collection("tasks").add({
-      uid: user.uid,
-      text,
-      date,
-      done: false,
-      notified: false,
-      created: new Date()
-    }).then(() => {
-      document.getElementById("taskInput").value = "";
-      document.getElementById("dateInput").value = "";
-    });
-  }
-
-  // Supprimer une tâche
-  function del(i) {
-    const docId = tasks[i]?._docId;
-    if (docId) {
-      db.collection("tasks").doc(docId).delete();
-    }
-  }
-  // Basculer done
-  function toggle(i) {
-    const docId = tasks[i]?._docId;
-    if (docId) {
-      db.collection("tasks").doc(docId).update({ done: !tasks[i].done });
-    }
-  }
-
-  // Connexion/déconnexion display et recupérer tâches
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      document.getElementById("auth").classList.add("hide");
-      document.getElementById("todo").classList.remove("hide");
-
-      db.collection("tasks")
-        .where("uid", "==", user.uid)
-        .orderBy("date")
-        .onSnapshot(snapshot => {
-          tasks = [];
-          snapshot.forEach(doc => {
-            let data = doc.data();
-            data._docId = doc.id;
-            tasks.push(data);
-          });
-          render();
-        });
-
-    } else {
-      // Non connecté
-      document.getElementById("todo").classList.add("hide");
-      document.getElementById("auth").classList.remove("hide");
-      tasks = [];
-      render();
-    }
-  });
-
-  // Rendu des tâches
-  function render() {
-  const list = document.getElementById("taskList");
-  list.innerHTML = "";
-  if (!tasks || tasks.length === 0) {
-    list.innerHTML = "<li>Aucune tâche trouvée.</li>";
-    return;
-  }
-  const today = new Date().toISOString().split("T")[0];
-  tasks.forEach((t, i) => {
-    const li = document.createElement("li");
-    let color = t.date < today && !t.done ? "red" : "black";
-    li.innerHTML = `
-      <div class="task-top">
-        <span class="${t.done ? "done" : ""}" style="color:${color}">${t.text}</span>
-        <div class="actions">
-          <button onclick="toggle(${i})">✔</button>
-          <button onclick="del(${i})">X</button>
-        </div>
-      </div>
-      <small>${t.date}</small>
-    `;
-    list.appendChild(li);
-  });
+function signup(){
+ auth.createUserWithEmailAndPassword(email.value, password.value)
+ .catch(e=>authError(e.message));
 }
 
-  // Notifications (alert) si la tâche "du jour" n'est pas encore notifiée
-  setInterval(() => {
-    const user = auth.currentUser;
-    if (!user) return;
-    const today = new Date().toISOString().split("T")[0];
-    tasks.forEach((t, i) => {
-      if (t.date === today && !t.notified) {
-        alert("Aujourd'hui: " + t.text);
-        // Met à jour Firestore
-        const docId = t._docId;
-        if (docId) {
-          db.collection("tasks").doc(docId).update({ notified: true });
-        }
-      }
-    });
-  }, 60000);
+function login(){
+ auth.signInWithEmailAndPassword(email.value, password.value)
+ .catch(e=>authError(e.message));
+}
+
+function logout(){ auth.signOut(); }
+
+function authError(msg){
+ document.getElementById("auth-error").innerText = msg;
+}
+
+function addTask(){
+ const user = auth.currentUser;
+ if(!user) return;
+
+ if(tasks.length >= 5){
+   alert("Limite gratuite atteinte (5 tâches)");
+   return;
+ }
+
+ db.collection("tasks").add({
+   uid:user.uid,
+   text:taskInput.value,
+   date:dateInput.value,
+   done:false,
+   notified:false
+ });
+
+ taskInput.value="";
+}
+
+function del(i){
+ db.collection("tasks").doc(tasks[i]._id).delete();
+}
+
+function toggle(i){
+ db.collection("tasks").doc(tasks[i]._id).update({done:!tasks[i].done});
+}
+
+auth.onAuthStateChanged(user=>{
+ if(user){
+   authDiv.classList.add("hide");
+   todoDiv.classList.remove("hide");
+
+   db.collection("tasks").where("uid","==",user.uid)
+   .onSnapshot(s=>{
+     tasks=[];
+     s.forEach(doc=>{
+       let d=doc.data();
+       d._id=doc.id;
+       tasks.push(d);
+     });
+     render();
+   });
+ }
+ else{
+   authDiv.classList.remove("hide");
+   todoDiv.classList.add("hide");
+ }
+});
+
+function render(){
+ taskList.innerHTML="";
+
+ const filter = document.getElementById("filter").value;
+ const today = new Date().toISOString().split("T")[0];
+
+ tasks.forEach((t,i)=>{
+
+ if(filter=="done" && !t.done) return;
+ if(filter=="pending" && t.done) return;
+
+ let color = t.date < today && !t.done ? "red":"black";
+
+ const li=document.createElement("li");
+ li.innerHTML=`
+ <div class="task-top">
+ <span class="${t.done?'done':''}" style="color:${color}">${t.text}</span>
+ <div class="actions">
+ <button onclick="toggle(${i})">✔</button>
+ <button onclick="del(${i})">X</button>
+ </div>
+ </div>
+ <small>${t.date}</small>`;
+
+ taskList.appendChild(li);
+ });
+
+ const total = tasks.length;
+ const done = tasks.filter(t=>t.done).length;
+ stats.innerHTML = `${done} / ${total} tâches terminées`;
+}
+
+if ("Notification" in window) {
+ Notification.requestPermission();
+
+ setInterval(()=>{
+   const today = new Date().toISOString().split("T")[0];
+   tasks.forEach(t=>{
+     if(t.date===today && !t.notified){
+       new Notification("StudyTrack",{body:t.text});
+       db.collection("tasks").doc(t._id).update({notified:true});
+     }
+   });
+ },60000);
+}
 </script>
+
 </body>
 </html>
