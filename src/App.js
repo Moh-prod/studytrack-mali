@@ -33,6 +33,21 @@ const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
+function translateFirebaseError(code) {
+  const messages = {
+    "auth/invalid-email": "Adresse email invalide.",
+    "auth/user-disabled": "Ce compte a été désactivé.",
+    "auth/user-not-found": "Aucun compte trouvé avec cet email.",
+    "auth/wrong-password": "Mot de passe incorrect.",
+    "auth/email-already-in-use": "Un compte existe déjà avec cet email.",
+    "auth/weak-password": "Le mot de passe doit contenir au moins 6 caractères.",
+    "auth/too-many-requests": "Trop de tentatives. Réessayez plus tard.",
+    "auth/invalid-credential": "Identifiants invalides. Vérifiez votre email et mot de passe.",
+    "auth/network-request-failed": "Erreur réseau. Vérifiez votre connexion internet.",
+  };
+  return messages[code] || "Une erreur est survenue. Veuillez réessayer.";
+}
+
 export default function App() {
   // ======== STATES ========
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
@@ -94,24 +109,33 @@ export default function App() {
         setSnack({ open: true, msg: "Limite gratuite atteinte (5 tâches max)" });
         return;
       }
-      await addDoc(collection(db, "tasks"), {
-        uid: user.uid,
-        text: text.trim(),
-        date,
-        done: false,
-        notified: false
-      });
-      setText("");
-      setDate("");
-      setSnack({ open: true, msg: "Tâche ajoutée !" });
+      try {
+        await addDoc(collection(db, "tasks"), {
+          uid: user.uid,
+          text: text.trim(),
+          date,
+          done: false,
+          notified: false
+        });
+        setText("");
+        setDate("");
+        setSnack({ open: true, msg: "Tâche ajoutée !" });
+      } catch {
+        setSnack({ open: true, msg: "Erreur lors de l'ajout. Réessayez." });
+      }
     }
   };
 
   // Suppression
   const handleDelete = async () => {
-    if (delDialog.id) await deleteDoc(doc(db, "tasks", delDialog.id));
-    setDelDialog({ open: false, id: null });
-    setSnack({ open: true, msg: "Tâche supprimée." });
+    try {
+      if (delDialog.id) await deleteDoc(doc(db, "tasks", delDialog.id));
+      setDelDialog({ open: false, id: null });
+      setSnack({ open: true, msg: "Tâche supprimée." });
+    } catch {
+      setDelDialog({ open: false, id: null });
+      setSnack({ open: true, msg: "Erreur lors de la suppression. Réessayez." });
+    }
   };
 
   // Edition
@@ -120,14 +144,22 @@ export default function App() {
   };
 
   const handleEditSave = async () => {
-    await updateDoc(doc(db, "tasks", edit.t.id), { text: edit.text, date: edit.date });
-    setEdit({ open: false, t: null, text: "", date: "" });
-    setSnack({ open: true, msg: "Tâche modifiée !" });
+    try {
+      await updateDoc(doc(db, "tasks", edit.t.id), { text: edit.text, date: edit.date });
+      setEdit({ open: false, t: null, text: "", date: "" });
+      setSnack({ open: true, msg: "Tâche modifiée !" });
+    } catch {
+      setSnack({ open: true, msg: "Erreur lors de la modification. Réessayez." });
+    }
   };
 
   // Toggle
   const handleToggle = async (t) => {
-    await updateDoc(doc(db, "tasks", t.id), { done: !t.done });
+    try {
+      await updateDoc(doc(db, "tasks", t.id), { done: !t.done });
+    } catch {
+      setSnack({ open: true, msg: "Erreur lors de la mise à jour. Réessayez." });
+    }
   };
 
   // Filtres
@@ -183,10 +215,12 @@ export default function App() {
           ) : (
             <>
               {/* Barre d'ajout */}
-              <Box component="form" autoComplete="off" onSubmit={handleAdd} sx={{ display: "flex", gap: 1, mb: 2 }}>
+              <Box component="form" autoComplete="off" onSubmit={handleAdd} sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
                 <TextField autoFocus fullWidth placeholder="Ajouter une tâche" value={text} onChange={e => setText(e.target.value)} />
-                <TextField type="date" value={date} onChange={e => setDate(e.target.value)} sx={{ maxWidth: "166px" }} />
-                <Button variant="contained" type="submit" color="primary">Ajouter</Button>
+                <Box sx={{ display: "flex", gap: 1, width: "100%" }}>
+                  <TextField type="date" value={date} onChange={e => setDate(e.target.value)} sx={{ flex: 1 }} InputLabelProps={{ shrink: true }} />
+                  <Button variant="contained" type="submit" color="primary" sx={{ minWidth: 100 }}>Ajouter</Button>
+                </Box>
               </Box>
 
               {/* Filtres + stats + progress */}
@@ -219,7 +253,12 @@ export default function App() {
                           <ListItem
                             key={t.id}
                             sx={{
-                              background: t.done ? "#e8f5e9" : overdue ? "#ffebee" : "#f7f7f7",
+                              background: (theme) =>
+                                t.done
+                                  ? theme.palette.mode === 'dark' ? 'rgba(76,175,80,0.15)' : '#e8f5e9'
+                                  : overdue
+                                    ? theme.palette.mode === 'dark' ? 'rgba(244,67,54,0.15)' : '#ffebee'
+                                    : theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : '#f7f7f7',
                               borderRadius: 3,
                               mb: 2,
                               transition: "all .3s",
@@ -244,7 +283,7 @@ export default function App() {
                               primary={
                                 <span style={{
                                   textDecoration: t.done ? "line-through" : undefined,
-                                  color: overdue ? "#d32f2f" : "inherit",
+                                  color: overdue ? "#f44336" : "inherit",
                                   fontWeight: overdue ? 600 : 400
                                 }}>{t.text}</span>
                               }
@@ -316,7 +355,7 @@ function AuthForm({ setSnack }) {
           await updateProfile(cred.user, { displayName: displayName.trim() });
       }
     } catch (err) {
-      setError(err.message);
+      setError(translateFirebaseError(err.code));
     }
   };
 
