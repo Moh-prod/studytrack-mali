@@ -18,7 +18,7 @@ import {
   doc
 } from "firebase/firestore";
 import {
-  AppBar, Toolbar, Typography, Avatar, IconButton, Button, Container, Card, TextField,
+  AppBar, Toolbar, Typography, Avatar, IconButton, Button, Container, TextField,
   Box, Select, MenuItem, List, ListItem, ListItemText, LinearProgress, Snackbar,
   Dialog, DialogTitle, DialogContent, DialogActions, Slide, CssBaseline, useMediaQuery, Paper, Switch
 } from "@mui/material";
