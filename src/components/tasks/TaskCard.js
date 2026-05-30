@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import {
   CheckCircleRounded, CheckCircleOutlineRounded, EditRounded,
-  DeleteRounded, ExpandMoreRounded, ExpandLessRounded,
+  DeleteRounded, ExpandMoreRounded, ExpandLessRounded, AccessTimeRounded,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { getRelativeDate, isOverdue } from '../../utils/dateUtils';
@@ -100,6 +100,18 @@ export default function TaskCard({ task, onToggle, onEdit, onDelete, onUpdateTas
                   sx={{ height: 22, fontSize: '0.7rem', fontWeight: 500 }}
                   variant="outlined"
                 />
+                {task.reminderTime && (
+                  <Chip
+                    icon={<AccessTimeRounded sx={{ fontSize: '0.85rem !important', color: 'primary.main' }} />}
+                    label={`Rappel à ${task.reminderTime}`}
+                    size="small"
+                    sx={{
+                      height: 22, fontSize: '0.7rem', fontWeight: 600,
+                      backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                      color: 'primary.main', border: (theme) => `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                    }}
+                  />
+                )}
                 <Typography variant="caption" sx={{ color: overdue ? 'error.main' : 'text.secondary', fontWeight: overdue ? 600 : 400 }}>
                   {getRelativeDate(task.date)}
                 </Typography>

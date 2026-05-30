@@ -6,7 +6,7 @@ import {
 } from '@mui/material';
 import {
   DashboardRounded, AssignmentRounded, FitnessCenterRounded,
-  TimerRounded, StickyNote2Rounded, CloseRounded,
+  TimerRounded, StickyNote2Rounded, CloseRounded, AccountBalanceWalletRounded,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 
@@ -17,6 +17,7 @@ const navItems = [
   { label: 'Tâches', icon: <AssignmentRounded />, path: '/tasks' },
   { label: 'Habitudes', icon: <FitnessCenterRounded />, path: '/habits' },
   { label: 'Pomodoro', icon: <TimerRounded />, path: '/pomodoro' },
+  { label: 'Dépenses', icon: <AccountBalanceWalletRounded />, path: '/expenses' },
   { label: 'Notes', icon: <StickyNote2Rounded />, path: '/notes' },
 ];
 

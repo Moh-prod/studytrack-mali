@@ -18,6 +18,11 @@ import TasksPage from './components/tasks/TasksPage';
 import HabitTracker from './components/habits/HabitTracker';
 import PomodoroTimer from './components/pomodoro/PomodoroTimer';
 import NotesPage from './components/notes/NotesPage';
+import ExpenseTracker from './components/expenses/ExpenseTracker';
+
+// Context & Services
+import { PomodoroProvider } from './context/PomodoroContext';
+import useNotificationService from './hooks/useNotificationService';
 
 // Hooks
 import useTasks from './hooks/useTasks';
@@ -47,8 +52,11 @@ export default function App() {
   }, []);
 
   // Hooks at app level so data flows to Dashboard
-  const { tasks } = useTasks(user);
+  const { tasks, updateTask } = useTasks(user);
   const { habits } = useHabits(user);
+
+  // Background notifications service for tasks
+  useNotificationService(tasks, updateTask);
 
   if (loading) {
     return (
@@ -80,30 +88,33 @@ export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-        <Sidebar
-          open={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-        />
-        <AppNavbar
-          user={user}
-          darkMode={darkMode}
-          setDarkMode={setDarkMode}
-          onMenuClick={() => setSidebarOpen(true)}
-        />
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <AnimatePresence mode="wait">
-            <Routes>
-              <Route path="/" element={<Dashboard tasks={tasks} habits={habits} />} />
-              <Route path="/tasks" element={<TasksPage user={user} />} />
-              <Route path="/habits" element={<HabitTracker user={user} />} />
-              <Route path="/pomodoro" element={<PomodoroTimer />} />
-              <Route path="/notes" element={<NotesPage user={user} />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </AnimatePresence>
+      <PomodoroProvider>
+        <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+          <Sidebar
+            open={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+          />
+          <AppNavbar
+            user={user}
+            darkMode={darkMode}
+            setDarkMode={setDarkMode}
+            onMenuClick={() => setSidebarOpen(true)}
+          />
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <AnimatePresence mode="wait">
+              <Routes>
+                <Route path="/" element={<Dashboard tasks={tasks} habits={habits} />} />
+                <Route path="/tasks" element={<TasksPage user={user} />} />
+                <Route path="/habits" element={<HabitTracker user={user} />} />
+                <Route path="/pomodoro" element={<PomodoroTimer />} />
+                <Route path="/expenses" element={<ExpenseTracker user={user} />} />
+                <Route path="/notes" element={<NotesPage user={user} />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </AnimatePresence>
+          </Box>
         </Box>
-      </Box>
+      </PomodoroProvider>
     </ThemeProvider>
   );
 }

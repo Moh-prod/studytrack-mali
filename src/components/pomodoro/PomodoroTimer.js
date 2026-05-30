@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   Box, Card, CardContent, Typography, IconButton, Slider, Collapse,
   useTheme, alpha, Tooltip,
@@ -9,78 +9,35 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import PageContainer from '../layout/PageContainer';
+import { usePomodoro } from '../../context/PomodoroContext';
 
 export default function PomodoroTimer() {
   const theme = useTheme();
-  const [workMin, setWorkMin] = useState(25);
-  const [breakMin, setBreakMin] = useState(5);
-  const [longBreakMin, setLongBreakMin] = useState(15);
-  const longBreakAfter = 4;
-  const [isWork, setIsWork] = useState(true);
-  const [timeLeft, setTimeLeft] = useState(25 * 60);
-  const [running, setRunning] = useState(false);
-  const [sessions, setSessions] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
-  const intervalRef = useRef(null);
 
-  const totalTime = isWork ? workMin * 60 : (sessions > 0 && sessions % longBreakAfter === 0 ? longBreakMin * 60 : breakMin * 60);
-  const progress = totalTime > 0 ? ((totalTime - timeLeft) / totalTime) * 100 : 0;
+  const {
+    workMin,
+    breakMin,
+    longBreakMin,
+    longBreakAfter,
+    isWork,
+    timeLeft,
+    running,
+    sessions,
+    progress,
+    start,
+    pause,
+    reset,
+    skip,
+    updateWorkMin,
+    updateBreakMin,
+    updateLongBreakMin,
+  } = usePomodoro();
 
   const formatTime = (s) => {
     const m = Math.floor(s / 60);
     const sec = s % 60;
     return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
-  };
-
-  const tick = useCallback(() => {
-    setTimeLeft((prev) => {
-      if (prev <= 1) {
-        // Timer ended
-        setRunning(false);
-        if (isWork) {
-          setSessions((s) => s + 1);
-          setIsWork(false);
-        } else {
-          setIsWork(true);
-        }
-        return 0;
-      }
-      return prev - 1;
-    });
-  }, [isWork]);
-
-  useEffect(() => {
-    if (running) {
-      intervalRef.current = setInterval(tick, 1000);
-    } else {
-      clearInterval(intervalRef.current);
-    }
-    return () => clearInterval(intervalRef.current);
-  }, [running, tick]);
-
-  // Reset time when mode changes
-  useEffect(() => {
-    if (timeLeft === 0) {
-      const newTime = isWork ? workMin * 60 : (sessions > 0 && sessions % longBreakAfter === 0 ? longBreakMin * 60 : breakMin * 60);
-      setTimeLeft(newTime);
-    }
-  }, [isWork, workMin, breakMin, longBreakMin, sessions, longBreakAfter, timeLeft]);
-
-  const reset = () => {
-    setRunning(false);
-    setTimeLeft(isWork ? workMin * 60 : breakMin * 60);
-  };
-
-  const skip = () => {
-    setRunning(false);
-    if (isWork) {
-      setSessions((s) => s + 1);
-      setIsWork(false);
-      setTimeLeft(sessions > 0 && (sessions + 1) % longBreakAfter === 0 ? longBreakMin * 60 : breakMin * 60);
-    } else {
-      setIsWork(true);
-      setTimeLeft(workMin * 60);
-    }
   };
 
   // SVG circle dimensions
@@ -147,7 +104,7 @@ export default function PomodoroTimer() {
           </Tooltip>
           <Tooltip title={running ? 'Pause' : 'Démarrer'}>
             <IconButton
-              onClick={() => setRunning(!running)}
+              onClick={() => running ? pause() : start()}
               sx={{
                 p: 2.5,
                 background: `linear-gradient(135deg, ${circleColor}, ${isWork ? '#06B6D4' : '#059669'})`,
@@ -187,19 +144,19 @@ export default function PomodoroTimer() {
               <Box sx={{ mt: 1 }}>
                 <Typography variant="caption" sx={{ fontWeight: 600 }}>Travail : {workMin} min</Typography>
                 <Slider
-                  value={workMin} onChange={(_, v) => { setWorkMin(v); if (!running && isWork) setTimeLeft(v * 60); }}
+                  value={workMin} onChange={(_, v) => updateWorkMin(v)}
                   min={15} max={60} step={5}
                   sx={{ color: '#7C3AED', mb: 2 }}
                 />
                 <Typography variant="caption" sx={{ fontWeight: 600 }}>Pause : {breakMin} min</Typography>
                 <Slider
-                  value={breakMin} onChange={(_, v) => { setBreakMin(v); if (!running && !isWork) setTimeLeft(v * 60); }}
+                  value={breakMin} onChange={(_, v) => updateBreakMin(v)}
                   min={3} max={15} step={1}
                   sx={{ color: '#10B981', mb: 2 }}
                 />
                 <Typography variant="caption" sx={{ fontWeight: 600 }}>Pause longue : {longBreakMin} min (après {longBreakAfter} sessions)</Typography>
                 <Slider
-                  value={longBreakMin} onChange={(_, v) => setLongBreakMin(v)}
+                  value={longBreakMin} onChange={(_, v) => updateLongBreakMin(v)}
                   min={10} max={30} step={5}
                   sx={{ color: '#06B6D4' }}
                 />

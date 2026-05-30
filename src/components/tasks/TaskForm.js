@@ -27,6 +27,7 @@ export default function TaskForm({ open, onClose, onSubmit, initialData }) {
   const isEdit = Boolean(initialData);
   const [text, setText] = useState(initialData?.text || '');
   const [date, setDate] = useState(initialData?.date || '');
+  const [reminderTime, setReminderTime] = useState(initialData?.reminderTime || '');
   const [priority, setPriority] = useState(initialData?.priority || 'medium');
   const [category, setCategory] = useState(initialData?.category || 'personal');
   const [subtasks, setSubtasks] = useState(initialData?.subtasks || []);
@@ -37,6 +38,8 @@ export default function TaskForm({ open, onClose, onSubmit, initialData }) {
     onSubmit({
       text: text.trim(),
       date,
+      reminderTime: reminderTime || '',
+      notified: false, // Reset the notified flag if the task is created or updated
       priority,
       category,
       subtasks,
@@ -47,6 +50,7 @@ export default function TaskForm({ open, onClose, onSubmit, initialData }) {
   const handleClose = () => {
     setText('');
     setDate('');
+    setReminderTime('');
     setPriority('medium');
     setCategory('personal');
     setSubtasks([]);
@@ -70,12 +74,14 @@ export default function TaskForm({ open, onClose, onSubmit, initialData }) {
     if (open && initialData) {
       setText(initialData.text || '');
       setDate(initialData.date || '');
+      setReminderTime(initialData.reminderTime || '');
       setPriority(initialData.priority || 'medium');
       setCategory(initialData.category || 'personal');
       setSubtasks(initialData.subtasks || []);
     } else if (open && !initialData) {
       setText('');
       setDate('');
+      setReminderTime('');
       setPriority('medium');
       setCategory('personal');
       setSubtasks([]);
@@ -100,12 +106,20 @@ export default function TaskForm({ open, onClose, onSubmit, initialData }) {
           value={text} onChange={(e) => setText(e.target.value)}
           sx={{ mb: 2 }}
         />
-        <TextField
-          fullWidth type="date" label="Date d'échéance"
-          value={date} onChange={(e) => setDate(e.target.value)}
-          sx={{ mb: 2 }}
-          slotProps={{ inputLabel: { shrink: true } }}
-        />
+        <Box sx={{ display: 'flex', gap: 2, mb: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+          <TextField
+            fullWidth type="date" label="Date d'échéance"
+            value={date} onChange={(e) => setDate(e.target.value)}
+            slotProps={{ inputLabel: { shrink: true } }}
+            sx={{ flex: 1 }}
+          />
+          <TextField
+            fullWidth type="time" label="Heure de rappel (optionnelle)"
+            value={reminderTime} onChange={(e) => setReminderTime(e.target.value)}
+            slotProps={{ inputLabel: { shrink: true } }}
+            sx={{ flex: 1 }}
+          />
+        </Box>
 
         <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
           <FormControl fullWidth size="small">
