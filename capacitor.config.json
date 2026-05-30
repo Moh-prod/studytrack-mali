@@ -1,0 +1,8 @@
+{
+  "appId": "com.productivityhub.app",
+  "appName": "Productivity Hub",
+  "webDir": "build",
+  "server": {
+    "androidScheme": "https"
+  }
+}

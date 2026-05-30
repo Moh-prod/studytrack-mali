@@ -26,3 +26,8 @@ yarn-error.log*
 serviceAccountKey.json
 subscribers.csv
 
+# Capacitor build files
+/android/app/build
+/android/app/src/main/assets/public
+
+

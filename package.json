@@ -25,7 +25,10 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "cap:sync": "npx cap sync",
+    "cap:open": "npx cap open android",
+    "mobile:build": "npm run build && npx cap sync"
   },
   "eslintConfig": {
     "extends": [
@@ -46,6 +49,9 @@
     ]
   },
   "devDependencies": {
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/cli": "^8.3.4",
+    "@capacitor/core": "^8.3.4",
     "firebase-admin": "^13.10.0"
   }
 }
