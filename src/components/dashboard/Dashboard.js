@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, memo } from 'react';
 import { Box, Typography, Card, CardContent, Button, TextField, alpha, useTheme, Grid } from '@mui/material';
 import PageContainer from '../layout/PageContainer';
 import StatsCards from './StatsCards';
@@ -12,12 +12,12 @@ import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { MailOutlineRounded, SendRounded } from '@mui/icons-material';
 
-export default function Dashboard({ tasks, habits }) {
+function Dashboard({ tasks, habits }) {
   const theme = useTheme();
   const { currentStreak, longestStreak, activeDates } = useStreak(tasks);
   const today = getToday();
-  const todayTasks = tasks.filter((t) => t.date === today && !t.done);
-  const overdueTasks = tasks.filter((t) => isOverdue(t.date) && !t.done);
+  const todayTasks = useMemo(() => tasks.filter((t) => t.date === today && !t.done), [tasks, today]);
+  const overdueTasks = useMemo(() => tasks.filter((t) => isOverdue(t.date) && !t.done), [tasks]);
 
   // Newsletter State
   const [email, setEmail] = useState('');
@@ -210,3 +210,5 @@ export default function Dashboard({ tasks, habits }) {
     </PageContainer>
   );
 }
+
+export default memo(Dashboard);

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+/* Inter font loaded via <link> in index.html — no @import needed here */
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -15,6 +15,9 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  /* Improves scroll perf on mobile */
+  -webkit-overflow-scrolling: touch;
+  text-rendering: optimizeSpeed;
 }
 
 /* Custom Scrollbar */
@@ -124,4 +127,17 @@ body {
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+/* GPU-accelerated transitions for interactive elements */
+.MuiCard-root,
+.MuiButton-root,
+.MuiIconButton-root {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Contain layout reflow to isolated subtrees */
+.MuiCard-root {
+  contain: layout style;
 }

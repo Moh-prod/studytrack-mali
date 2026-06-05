@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Box, Card, Typography } from '@mui/material';
 import {
   AssignmentRounded, CheckCircleRounded, LocalFireDepartmentRounded, TrendingUpRounded,
@@ -39,7 +39,7 @@ const cardConfigs = [
   },
 ];
 
-export default function StatsCards({ tasks, streak }) {
+function StatsCards({ tasks, streak }) {
   const total = tasks.length;
   const done = tasks.filter((t) => t.done).length;
   const rate = total > 0 ? Math.round((done / total) * 100) : 0;
@@ -103,3 +103,5 @@ export default function StatsCards({ tasks, streak }) {
     </Box>
   );
 }
+
+export default memo(StatsCards);

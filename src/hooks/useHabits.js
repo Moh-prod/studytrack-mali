@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -22,7 +22,8 @@ export default function useHabits(user) {
     return () => unsub();
   }, [user]);
 
-  const addHabit = async (data) => {
+  // Stable references — prevents child re-renders when App re-renders
+  const addHabit = useCallback(async (data) => {
     if (!user) return;
     await addDoc(collection(db, 'habits'), {
       uid: user.uid,
@@ -33,23 +34,23 @@ export default function useHabits(user) {
       createdAt: new Date().toISOString(),
       ...data,
     });
-  };
+  }, [user]);
 
-  const updateHabit = async (id, data) => {
+  const updateHabit = useCallback(async (id, data) => {
     await updateDoc(doc(db, 'habits', id), data);
-  };
+  }, []);
 
-  const deleteHabit = async (id) => {
+  const deleteHabit = useCallback(async (id) => {
     await deleteDoc(doc(db, 'habits', id));
-  };
+  }, []);
 
-  const toggleHabitDate = async (habit, dateStr) => {
+  const toggleHabitDate = useCallback(async (habit, dateStr) => {
     const dates = habit.completedDates || [];
     const newDates = dates.includes(dateStr)
       ? dates.filter((d) => d !== dateStr)
       : [...dates, dateStr];
     await updateDoc(doc(db, 'habits', habit.id), { completedDates: newDates });
-  };
+  }, []);
 
   return { habits, loading, addHabit, updateHabit, deleteHabit, toggleHabitDate };
 }

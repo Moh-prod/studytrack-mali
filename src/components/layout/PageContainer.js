@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Box, Typography, useTheme, useMediaQuery } from '@mui/material';
 import { motion } from 'framer-motion';
 import { SIDEBAR_WIDTH } from './Sidebar';
 
-export default function PageContainer({ children, title, subtitle }) {
+function PageContainer({ children, title, subtitle }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -20,9 +20,9 @@ export default function PageContainer({ children, title, subtitle }) {
     >
       {(title || subtitle) && (
         <motion.div
-          initial={{ opacity: 0, y: -10 }}
+          initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
+          transition={{ duration: 0.2 }}
         >
           <Box sx={{ mb: 3 }}>
             {title && (
@@ -39,12 +39,14 @@ export default function PageContainer({ children, title, subtitle }) {
         </motion.div>
       )}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
+        transition={{ duration: 0.25, delay: 0.04 }}
       >
         {children}
       </motion.div>
     </Box>
   );
 }
+
+export default memo(PageContainer);

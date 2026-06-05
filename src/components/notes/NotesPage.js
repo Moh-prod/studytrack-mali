@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, memo } from 'react';
 import {
   Box, Card, CardContent, Typography, TextField, Button, IconButton,
   Dialog, DialogTitle, DialogContent, DialogActions, Slide, Snackbar,
@@ -17,7 +17,7 @@ import { formatDate } from '../../utils/dateUtils';
 const Transition = React.forwardRef((props, ref) => <Slide direction="up" ref={ref} {...props} />);
 const noteColors = ['#7C3AED', '#06B6D4', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#8B5CF6', '#6366F1'];
 
-export default function NotesPage({ user }) {
+function NotesPage({ user }) {
   const { notes, addNote, updateNote, deleteNote, togglePin } = useNotes(user);
   const [search, setSearch] = useState('');
   const [editNote, setEditNote] = useState(null);
@@ -28,7 +28,7 @@ export default function NotesPage({ user }) {
   const [delNote, setDelNote] = useState(null);
   const [snack, setSnack] = useState({ open: false, msg: '' });
 
-  const filtered = notes
+  const filtered = useMemo(() => notes
     .filter((n) => {
       if (!search.trim()) return true;
       const s = search.toLowerCase();
@@ -38,7 +38,7 @@ export default function NotesPage({ user }) {
       if (a.pinned && !b.pinned) return -1;
       if (!a.pinned && b.pinned) return 1;
       return (b.createdAt || '').localeCompare(a.createdAt || '');
-    });
+    }), [notes, search]);
 
   const openNew = () => {
     setEditNote(null);
@@ -232,3 +232,5 @@ export default function NotesPage({ user }) {
     </PageContainer>
   );
 }
+
+export default memo(NotesPage);

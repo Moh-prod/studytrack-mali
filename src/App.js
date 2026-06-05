@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
@@ -7,18 +7,9 @@ import { CssBaseline, Box, useMediaQuery, CircularProgress } from '@mui/material
 import { getTheme } from './theme/theme';
 import { AnimatePresence } from 'framer-motion';
 
-// Layout
+// Layout — always loaded (small, needed immediately)
 import Sidebar from './components/layout/Sidebar';
 import AppNavbar from './components/layout/AppNavbar';
-
-// Pages
-import AuthPage from './components/auth/AuthPage';
-import Dashboard from './components/dashboard/Dashboard';
-import TasksPage from './components/tasks/TasksPage';
-import HabitTracker from './components/habits/HabitTracker';
-import PomodoroTimer from './components/pomodoro/PomodoroTimer';
-import NotesPage from './components/notes/NotesPage';
-import ExpenseTracker from './components/expenses/ExpenseTracker';
 
 // Context & Services
 import { PomodoroProvider } from './context/PomodoroContext';
@@ -27,6 +18,24 @@ import useNotificationService from './hooks/useNotificationService';
 // Hooks
 import useTasks from './hooks/useTasks';
 import useHabits from './hooks/useHabits';
+
+// Pages — lazy loaded (code splitting)
+const AuthPage = lazy(() => import('./components/auth/AuthPage'));
+const Dashboard = lazy(() => import('./components/dashboard/Dashboard'));
+const TasksPage = lazy(() => import('./components/tasks/TasksPage'));
+const HabitTracker = lazy(() => import('./components/habits/HabitTracker'));
+const PomodoroTimer = lazy(() => import('./components/pomodoro/PomodoroTimer'));
+const NotesPage = lazy(() => import('./components/notes/NotesPage'));
+const ExpenseTracker = lazy(() => import('./components/expenses/ExpenseTracker'));
+
+
+
+// Minimal page-level loading fallback
+const PageFallback = () => (
+  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+    <CircularProgress sx={{ color: '#7C3AED' }} size={36} thickness={4} />
+  </Box>
+);
 
 export default function App() {
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
@@ -51,66 +60,88 @@ export default function App() {
     return () => unsub();
   }, []);
 
-  // Hooks at app level so data flows to Dashboard
-  const { tasks, updateTask } = useTasks(user);
-  const { habits } = useHabits(user);
+  // ─── Data hooks: called ONCE here — prevents double Firestore subscriptions ───
+  // TasksPage previously also called useTasks(user) internally — that's now fixed
+  const { tasks, addTask, updateTask, deleteTask, toggleTask } = useTasks(user);
+  const { habits, addHabit, updateHabit, deleteHabit, toggleHabitDate } = useHabits(user);
 
-  // Background notifications service for tasks
+  // Background notification polling for tasks
   useNotificationService(tasks, updateTask);
+
+  // ─── Memoized callbacks — no new function refs on every render ───────────────
+  const handleCloseSidebar = useCallback(() => setSidebarOpen(false), []);
+  const handleOpenSidebar = useCallback(() => setSidebarOpen(true), []);
+  const handleToggleDark = useCallback(() => setDarkMode(prev => !prev), []);
 
   if (loading) {
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <Box
-          sx={{
-            minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: darkMode ? '#0F0E17' : '#F8FAFC',
-          }}
-        >
+        <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: darkMode ? '#0F0E17' : '#F8FAFC' }}>
           <CircularProgress sx={{ color: '#7C3AED' }} size={48} />
         </Box>
       </ThemeProvider>
     );
   }
 
-  // Not logged in -> Auth page
+  // Not logged in → Auth page
   if (!user) {
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <AuthPage />
+        <Suspense fallback={<PageFallback />}>
+          <AuthPage />
+        </Suspense>
       </ThemeProvider>
     );
   }
 
-  // Logged in -> App with sidebar + routes
+  // Logged in → App with sidebar + routes
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <PomodoroProvider>
         <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-          <Sidebar
-            open={sidebarOpen}
-            onClose={() => setSidebarOpen(false)}
-          />
+          <Sidebar open={sidebarOpen} onClose={handleCloseSidebar} />
           <AppNavbar
             user={user}
             darkMode={darkMode}
-            setDarkMode={setDarkMode}
-            onMenuClick={() => setSidebarOpen(true)}
+            setDarkMode={handleToggleDark}
+            onMenuClick={handleOpenSidebar}
           />
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <AnimatePresence mode="wait">
-              <Routes>
-                <Route path="/" element={<Dashboard tasks={tasks} habits={habits} />} />
-                <Route path="/tasks" element={<TasksPage user={user} />} />
-                <Route path="/habits" element={<HabitTracker user={user} />} />
-                <Route path="/pomodoro" element={<PomodoroTimer />} />
-                <Route path="/expenses" element={<ExpenseTracker user={user} />} />
-                <Route path="/notes" element={<NotesPage user={user} />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+              {/* Suspense wraps all lazy routes — shows spinner while chunk loads */}
+              <Suspense fallback={<PageFallback />}>
+                <Routes>
+                  <Route path="/" element={<Dashboard tasks={tasks} habits={habits} />} />
+                  {/* Pass data from app-level hooks — no new subscriptions inside pages */}
+                  <Route path="/tasks" element={
+                    <TasksPage
+                      user={user}
+                      tasks={tasks}
+                      addTask={addTask}
+                      updateTask={updateTask}
+                      deleteTask={deleteTask}
+                      toggleTask={toggleTask}
+                    />
+                  } />
+                  <Route path="/habits" element={
+                    <HabitTracker
+                      user={user}
+                      habits={habits}
+                      addHabit={addHabit}
+                      updateHabit={updateHabit}
+                      deleteHabit={deleteHabit}
+                      toggleHabitDate={toggleHabitDate}
+                    />
+                  } />
+                  <Route path="/pomodoro" element={<PomodoroTimer />} />
+                  <Route path="/expenses" element={<ExpenseTracker user={user} />} />
+                  <Route path="/notes" element={<NotesPage user={user} />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </Suspense>
             </AnimatePresence>
           </Box>
         </Box>

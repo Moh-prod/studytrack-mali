@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
 import {
   Box, Card, CardContent, Typography, TextField, Button, IconButton, Checkbox,
   Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, Slide,
@@ -8,7 +8,6 @@ import { AddRounded, DeleteRounded } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import PageContainer from '../layout/PageContainer';
 import ConfirmDialog from '../common/ConfirmDialog';
-import useHabits from '../../hooks/useHabits';
 import { getCurrentWeekDates, getDayName, getToday } from '../../utils/dateUtils';
 
 const emojiOptions = ['⭐', '📖', '🏃‍♂️', '🧘‍♂️', '💧', '🎯', '📝', '🎵', '💤', '🍎', '🧠', '💪'];
@@ -16,8 +15,8 @@ const colorOptions = ['#7C3AED', '#06B6D4', '#10B981', '#F59E0B', '#EF4444', '#E
 
 const Transition = React.forwardRef((props, ref) => <Slide direction="up" ref={ref} {...props} />);
 
-export default function HabitTracker({ user }) {
-  const { habits, addHabit, deleteHabit, toggleHabitDate } = useHabits(user);
+// Props come from App.js — no internal useHabits call (eliminates double Firestore subscription)
+function HabitTracker({ user, habits = [], addHabit, deleteHabit, toggleHabitDate }) {
   const theme = useTheme();
   const [formOpen, setFormOpen] = useState(false);
   const [name, setName] = useState('');
@@ -26,10 +25,11 @@ export default function HabitTracker({ user }) {
   const [delHabit, setDelHabit] = useState(null);
   const [snack, setSnack] = useState({ open: false, msg: '' });
 
-  const weekDates = getCurrentWeekDates();
-  const today = getToday();
+  // Memoize weekDates and today — stable for the whole day, computed once
+  const weekDates = useMemo(() => getCurrentWeekDates(), []);
+  const today = useMemo(() => getToday(), []);
 
-  const handleAdd = async () => {
+  const handleAdd = useCallback(async () => {
     if (!name.trim()) return;
     await addHabit({ name: name.trim(), icon, color });
     setName('');
@@ -37,35 +37,38 @@ export default function HabitTracker({ user }) {
     setColor('#7C3AED');
     setFormOpen(false);
     setSnack({ open: true, msg: 'Habitude ajoutée !' });
-  };
+  }, [name, icon, color, addHabit]);
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (delHabit) {
       await deleteHabit(delHabit.id);
       setDelHabit(null);
       setSnack({ open: true, msg: 'Habitude supprimée.' });
     }
-  };
+  }, [delHabit, deleteHabit]);
 
-  const getHabitStreak = (habit) => {
-    const dates = (habit.completedDates || []).sort().reverse();
+  const getHabitStreak = useCallback((habit) => {
+    const datesSet = new Set(habit.completedDates || []);
     let streak = 0;
     const check = new Date(today);
-    if (!dates.includes(today)) check.setDate(check.getDate() - 1);
+    if (!datesSet.has(today)) check.setDate(check.getDate() - 1);
     while (true) {
       const ds = check.toISOString().substring(0, 10);
-      if (dates.includes(ds)) {
+      if (datesSet.has(ds)) {
         streak++;
         check.setDate(check.getDate() - 1);
       } else break;
     }
     return streak;
-  };
+  }, [today]);
 
-  const getWeekRate = (habit) => {
-    const done = weekDates.filter((d) => (habit.completedDates || []).includes(d)).length;
+  const getWeekRate = useCallback((habit) => {
+    const datesSet = new Set(habit.completedDates || []);
+    const done = weekDates.filter((d) => datesSet.has(d)).length;
     return Math.round((done / 7) * 100);
-  };
+  }, [weekDates]);
+
+  const handleCloseSnack = useCallback(() => setSnack(s => ({ ...s, open: false })), []);
 
   return (
     <PageContainer title="Suivi d'Habitudes" subtitle="Construis ta discipline quotidienne">
@@ -234,9 +237,11 @@ export default function HabitTracker({ user }) {
 
       <Snackbar
         open={snack.open} autoHideDuration={3000}
-        onClose={() => setSnack({ ...snack, open: false })}
+        onClose={handleCloseSnack}
         message={snack.msg} TransitionComponent={Transition}
       />
     </PageContainer>
   );
 }
+
+export default memo(HabitTracker);

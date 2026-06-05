@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import {
   Card, CardContent, Box, Typography, IconButton, Chip, LinearProgress,
   Checkbox, Collapse, alpha, Tooltip,
@@ -25,7 +25,7 @@ const categoryConfig = {
   creativity: { label: 'Créativité', emoji: '🎨' },
 };
 
-export default function TaskCard({ task, onToggle, onEdit, onDelete, onUpdateTask }) {
+function TaskCard({ task, onToggle, onEdit, onDelete, onUpdateTask }) {
   const [showSubs, setShowSubs] = useState(false);
   const priority = priorityConfig[task.priority] || priorityConfig.medium;
   const category = categoryConfig[task.category] || categoryConfig.personal;
@@ -34,12 +34,12 @@ export default function TaskCard({ task, onToggle, onEdit, onDelete, onUpdateTas
   const subtasks = task.subtasks || [];
   const subDone = subtasks.filter((s) => s.done).length;
 
-  const toggleSubtask = (index) => {
+  const toggleSubtask = useCallback((index) => {
     const updated = subtasks.map((s, i) =>
       i === index ? { ...s, done: !s.done } : s
     );
     onUpdateTask(task.id, { subtasks: updated });
-  };
+  }, [subtasks, onUpdateTask, task.id]);
 
   return (
     <motion.div
@@ -185,3 +185,4 @@ export default function TaskCard({ task, onToggle, onEdit, onDelete, onUpdateTas
 }
 
 export { priorityConfig, categoryConfig };
+export default memo(TaskCard);

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
 import {
   Box, TextField, IconButton, Fab, Snackbar, Slide, ToggleButtonGroup,
   ToggleButton, useMediaQuery, useTheme, InputAdornment, Typography,
@@ -13,14 +13,13 @@ import TaskForm from './TaskForm';
 import TaskFilters from './TaskFilters';
 import KanbanBoard from './KanbanBoard';
 import ConfirmDialog from '../common/ConfirmDialog';
-import useTasks from '../../hooks/useTasks';
 
 const Transition = React.forwardRef((props, ref) => <Slide direction="up" ref={ref} {...props} />);
 
 const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 };
 
-export default function TasksPage({ user }) {
-  const { tasks, addTask, updateTask, deleteTask, toggleTask } = useTasks(user);
+// Props now come from App.js — no internal useTasks call (eliminates double Firestore subscription)
+function TasksPage({ user, tasks = [], addTask, updateTask, deleteTask, toggleTask }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -36,23 +35,19 @@ export default function TasksPage({ user }) {
 
   const filtered = useMemo(() => {
     let list = [...tasks];
-    // Search
     if (search.trim()) {
       const s = search.toLowerCase();
       list = list.filter((t) => t.text.toLowerCase().includes(s));
     }
-    // Status filter
     if (filter !== 'all') {
       list = list.filter((t) => {
         const status = t.status || (t.done ? 'done' : 'todo');
         return status === filter;
       });
     }
-    // Category filter
     if (categoryFilter !== 'all') {
       list = list.filter((t) => (t.category || 'personal') === categoryFilter);
     }
-    // Sort
     list.sort((a, b) => {
       if (sortBy === 'date') return (a.date || '').localeCompare(b.date || '');
       if (sortBy === 'priority') return (priorityOrder[a.priority] || 2) - (priorityOrder[b.priority] || 2);
@@ -62,39 +57,45 @@ export default function TasksPage({ user }) {
     return list;
   }, [tasks, search, filter, sortBy, categoryFilter]);
 
-  const handleAdd = async (data) => {
+  const handleAdd = useCallback(async (data) => {
     await addTask(data);
     setSnack({ open: true, msg: 'Tâche ajoutée !' });
-  };
+  }, [addTask]);
 
-  const handleEdit = (task) => {
+  const handleEdit = useCallback((task) => {
     setEditData(task);
     setFormOpen(true);
-  };
+  }, []);
 
-  const handleEditSubmit = async (data) => {
+  const handleEditSubmit = useCallback(async (data) => {
     if (editData) {
       await updateTask(editData.id, data);
       setEditData(null);
       setSnack({ open: true, msg: 'Tâche modifiée !' });
     }
-  };
+  }, [editData, updateTask]);
 
-  const handleNewSubmit = async (data) => {
+  const handleNewSubmit = useCallback(async (data) => {
     if (editData) {
       await handleEditSubmit(data);
     } else {
       await handleAdd(data);
     }
-  };
+  }, [editData, handleEditSubmit, handleAdd]);
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (delTask) {
       await deleteTask(delTask.id);
       setDelTask(null);
       setSnack({ open: true, msg: 'Tâche supprimée.' });
     }
-  };
+  }, [delTask, deleteTask]);
+
+  const handleOpenForm = useCallback(() => { setEditData(null); setFormOpen(true); }, []);
+  const handleCloseForm = useCallback(() => { setFormOpen(false); setEditData(null); }, []);
+  const handleCloseSnack = useCallback(() => setSnack(s => ({ ...s, open: false })), []);
+  const handleSetDelTask = useCallback((task) => setDelTask(task), []);
+  const handleCancelDel = useCallback(() => setDelTask(null), []);
 
   return (
     <PageContainer title="Mes Tâches" subtitle={`${tasks.length} tâche${tasks.length > 1 ? 's' : ''} au total`}>
@@ -122,7 +123,7 @@ export default function TasksPage({ user }) {
         </ToggleButtonGroup>
         {!isMobile && (
           <IconButton
-            onClick={() => { setEditData(null); setFormOpen(true); }}
+            onClick={handleOpenForm}
             sx={{
               background: 'linear-gradient(135deg, #7C3AED, #06B6D4)',
               color: '#FFF',
@@ -156,7 +157,7 @@ export default function TasksPage({ user }) {
                 task={t}
                 onToggle={toggleTask}
                 onEdit={handleEdit}
-                onDelete={(task) => setDelTask(task)}
+                onDelete={handleSetDelTask}
                 onUpdateTask={updateTask}
               />
             ))
@@ -167,46 +168,42 @@ export default function TasksPage({ user }) {
           tasks={filtered}
           onToggle={toggleTask}
           onEdit={handleEdit}
-          onDelete={(task) => setDelTask(task)}
+          onDelete={handleSetDelTask}
           onUpdateTask={updateTask}
         />
       )}
 
       {/* Mobile FAB */}
       {isMobile && (
-        <Fab
-          onClick={() => { setEditData(null); setFormOpen(true); }}
-          sx={{ position: 'fixed', bottom: 24, right: 24 }}
-        >
+        <Fab onClick={handleOpenForm} sx={{ position: 'fixed', bottom: 24, right: 24 }}>
           <AddRounded />
         </Fab>
       )}
 
-      {/* Form Dialog */}
       <TaskForm
         open={formOpen}
-        onClose={() => { setFormOpen(false); setEditData(null); }}
+        onClose={handleCloseForm}
         onSubmit={handleNewSubmit}
         initialData={editData}
       />
 
-      {/* Delete Confirmation */}
       <ConfirmDialog
         open={Boolean(delTask)}
         title="Supprimer cette tâche ?"
         message={`"${delTask?.text}" sera supprimée définitivement.`}
         onConfirm={handleDelete}
-        onCancel={() => setDelTask(null)}
+        onCancel={handleCancelDel}
       />
 
-      {/* Snackbar */}
       <Snackbar
         open={snack.open}
         autoHideDuration={3000}
-        onClose={() => setSnack({ ...snack, open: false })}
+        onClose={handleCloseSnack}
         message={snack.msg}
         TransitionComponent={Transition}
       />
     </PageContainer>
   );
 }
+
+export default memo(TasksPage);
