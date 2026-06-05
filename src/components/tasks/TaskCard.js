@@ -1,4 +1,4 @@
-import React, { useState, useCallback, memo } from 'react';
+import React, { useState, useCallback, useMemo, memo } from 'react';
 import {
   Card, CardContent, Box, Typography, IconButton, Chip, LinearProgress,
   Checkbox, Collapse, alpha, Tooltip,
@@ -31,7 +31,7 @@ function TaskCard({ task, onToggle, onEdit, onDelete, onUpdateTask }) {
   const category = categoryConfig[task.category] || categoryConfig.personal;
   const overdue = isOverdue(task.date) && !task.done;
 
-  const subtasks = task.subtasks || [];
+  const subtasks = useMemo(() => task.subtasks || [], [task.subtasks]);
   const subDone = subtasks.filter((s) => s.done).length;
 
   const toggleSubtask = useCallback((index) => {
