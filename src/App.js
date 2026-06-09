@@ -27,6 +27,7 @@ const HabitTracker = lazy(() => import('./components/habits/HabitTracker'));
 const PomodoroTimer = lazy(() => import('./components/pomodoro/PomodoroTimer'));
 const NotesPage = lazy(() => import('./components/notes/NotesPage'));
 const ExpenseTracker = lazy(() => import('./components/expenses/ExpenseTracker'));
+const JournalPage = lazy(() => import('./components/journal/JournalPage'));
 
 
 
@@ -139,6 +140,13 @@ export default function App() {
                   <Route path="/pomodoro" element={<PomodoroTimer />} />
                   <Route path="/expenses" element={<ExpenseTracker user={user} />} />
                   <Route path="/notes" element={<NotesPage user={user} />} />
+                  <Route path="/journal" element={
+                    <JournalPage
+                      user={user}
+                      tasks={tasks}
+                      habits={habits}
+                    />
+                  } />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </Suspense>

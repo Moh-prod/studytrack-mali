@@ -7,6 +7,7 @@ import {
 import {
   DashboardRounded, AssignmentRounded, FitnessCenterRounded,
   TimerRounded, StickyNote2Rounded, CloseRounded, AccountBalanceWalletRounded,
+  MenuBookRounded,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 
@@ -19,6 +20,7 @@ const navItems = [
   { label: 'Pomodoro', icon: <TimerRounded />, path: '/pomodoro' },
   { label: 'Dépenses', icon: <AccountBalanceWalletRounded />, path: '/expenses' },
   { label: 'Notes', icon: <StickyNote2Rounded />, path: '/notes' },
+  { label: 'Journal', icon: <MenuBookRounded />, path: '/journal', badge: '✨' },
 ];
 
 export { SIDEBAR_WIDTH };
@@ -128,6 +130,11 @@ export default function Sidebar({ open, onClose }) {
                       color: active ? theme.palette.primary.main : theme.palette.text.primary,
                     }}
                   />
+                  {item.badge && !active && (
+                    <Typography sx={{ fontSize: '0.65rem', color: '#F59E0B', fontWeight: 700 }}>
+                      {item.badge}
+                    </Typography>
+                  )}
                   {active && (
                     <Box
                       sx={{

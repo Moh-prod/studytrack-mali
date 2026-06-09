@@ -6,9 +6,10 @@ import {
 import {
   CheckCircleRounded, CheckCircleOutlineRounded, EditRounded,
   DeleteRounded, ExpandMoreRounded, ExpandLessRounded, AccessTimeRounded,
+  TaskAltRounded, ScheduleRounded,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
-import { getRelativeDate, isOverdue } from '../../utils/dateUtils';
+import { getTaskCompletedLabel, isOverdue } from '../../utils/dateUtils';
 
 const priorityConfig = {
   urgent: { label: 'Urgente', color: '#EF4444' },
@@ -29,7 +30,12 @@ function TaskCard({ task, onToggle, onEdit, onDelete, onUpdateTask }) {
   const [showSubs, setShowSubs] = useState(false);
   const priority = priorityConfig[task.priority] || priorityConfig.medium;
   const category = categoryConfig[task.category] || categoryConfig.personal;
+  // Une tâche terminée n'est JAMAIS affichée comme "en retard actif"
   const overdue = isOverdue(task.date) && !task.done;
+  // Label de date : figé pour les tâches terminées, dynamique pour les autres
+  const dateLabel = getTaskCompletedLabel(task);
+  // Détermine si la tâche terminée avait du retard (pour coloriser diffremment)
+  const completedLate = task.done && dateLabel.includes('retard');
 
   const subtasks = useMemo(() => task.subtasks || [], [task.subtasks]);
   const subDone = subtasks.filter((s) => s.done).length;
@@ -112,9 +118,26 @@ function TaskCard({ task, onToggle, onEdit, onDelete, onUpdateTask }) {
                     }}
                   />
                 )}
-                <Typography variant="caption" sx={{ color: overdue ? 'error.main' : 'text.secondary', fontWeight: overdue ? 600 : 400 }}>
-                  {getRelativeDate(task.date)}
-                </Typography>
+                {/* Label de date : figé pour les tâches terminées */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
+                  {task.done ? (
+                    <TaskAltRounded sx={{ fontSize: '0.85rem', color: completedLate ? 'warning.main' : 'success.main' }} />
+                  ) : overdue ? (
+                    <ScheduleRounded sx={{ fontSize: '0.85rem', color: 'error.main' }} />
+                  ) : null}
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: task.done
+                        ? (completedLate ? 'warning.main' : 'success.main')
+                        : overdue ? 'error.main' : 'text.secondary',
+                      fontWeight: (task.done || overdue) ? 600 : 400,
+                      fontStyle: task.done ? 'italic' : 'normal',
+                    }}
+                  >
+                    {dateLabel}
+                  </Typography>
+                </Box>
               </Box>
 
               {/* Subtasks summary */}
