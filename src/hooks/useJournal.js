@@ -52,23 +52,29 @@ export default function useJournal(user, tasks, habits, currentStreak) {
     if (!user) return;
     const today = dayjs().format('YYYY-MM-DD');
 
-    // Vérifie si déjà existant
-    const q = query(
-      collection(db, 'journal_entries'),
-      where('uid', '==', user.uid),
-      where('type', '==', 'daily'),
-      where('periodStart', '==', today)
-    );
-    const snap = await getDocs(q);
-    if (!snap.empty) return; // Déjà généré aujourd'hui
+    try {
+      // Requête simple (uid uniquement) pour éviter l'erreur d'index composite Firestore
+      const q = query(
+        collection(db, 'journal_entries'),
+        where('uid', '==', user.uid)
+      );
+      const snap = await getDocs(q);
+      const alreadyExists = snap.docs.some(doc => {
+        const data = doc.data();
+        return data.type === 'daily' && data.periodStart === today;
+      });
+      if (alreadyExists) return; // Déjà généré aujourd'hui
 
-    // Génère et sauvegarde
-    const report = generateDailyReport({ tasks, habits, pomodoroData, currentStreak, dateStr: today });
-    await addDoc(collection(db, 'journal_entries'), {
-      uid: user.uid,
-      ...report,
-      createdAt: new Date().toISOString(),
-    });
+      // Génère et sauvegarde
+      const report = generateDailyReport({ tasks, habits, pomodoroData, currentStreak, dateStr: today });
+      await addDoc(collection(db, 'journal_entries'), {
+        uid: user.uid,
+        ...report,
+        createdAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Erreur lors de la génération du rapport quotidien:", error);
+    }
   }, [user, tasks, habits, currentStreak]);
 
   /**
