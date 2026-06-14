@@ -6,6 +6,7 @@ import {
 import { db } from '../firebase';
 import dayjs from 'dayjs';
 import { generateDailyReport, generateWeeklyReport } from '../utils/journalUtils';
+import { generateMonthlyReport } from '../utils/reportScheduler';
 
 /**
  * Hook principal du journal StudyTrack.
@@ -134,18 +135,48 @@ export default function useJournal(user, tasks, habits, currentStreak) {
     });
   }, [user, entries, getWeekEntries]);
 
+  /**
+   * Génère et sauvegarde le rapport mensuel d'un mois donné.
+   */
+  const ensureMonthReport = useCallback(async (year, month) => {
+    if (!user) return;
+
+    const monthStart = dayjs(`${year}-${String(month).padStart(2, '0')}-01`);
+    const monthStartStr = monthStart.format('YYYY-MM-DD');
+
+    const existing = entries.find(
+      (e) => e.type === 'monthly' && e.periodStart === monthStartStr
+    );
+    if (existing) return;
+
+    const dailyReports = getMonthEntries(year, month);
+    if (dailyReports.length === 0) return;
+
+    const report = generateMonthlyReport({ dailyReports, year, month });
+    if (!report) return;
+
+    await addDoc(collection(db, 'journal_entries'), {
+      uid: user.uid,
+      ...report,
+      createdAt: new Date().toISOString(),
+    });
+  }, [user, entries, getMonthEntries]);
+
   // Filtres rapides
   const dailyEntries = entries.filter((e) => e.type === 'daily');
   const weeklyEntries = entries.filter((e) => e.type === 'weekly');
+  const monthlyEntries = entries.filter((e) => e.type === 'monthly');
 
   return {
     entries,
     dailyEntries,
     weeklyEntries,
+    monthlyEntries,
     todayEntry,
     loading,
     ensureTodayReport,
     ensureWeekReport,
+    ensureMonthReport,
     updateEntry,
     getWeekEntries,
     getMonthEntries,

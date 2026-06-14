@@ -18,6 +18,10 @@ import useNotificationService from './hooks/useNotificationService';
 // Hooks
 import useTasks from './hooks/useTasks';
 import useHabits from './hooks/useHabits';
+import useStreak from './hooks/useStreak';
+
+// Report scheduler
+import { startReportScheduler, stopReportScheduler } from './utils/reportScheduler';
 
 // Pages — lazy loaded (code splitting)
 const AuthPage = lazy(() => import('./components/auth/AuthPage'));
@@ -65,9 +69,20 @@ export default function App() {
   // TasksPage previously also called useTasks(user) internally — that's now fixed
   const { tasks, addTask, updateTask, deleteTask, toggleTask } = useTasks(user);
   const { habits, addHabit, updateHabit, deleteHabit, toggleHabitDate } = useHabits(user);
+  const { currentStreak } = useStreak(tasks);
 
   // Background notification polling for tasks
   useNotificationService(tasks, updateTask);
+
+  // ─── Report scheduler: auto-generate reports at midnight ──────────
+  useEffect(() => {
+    if (user) {
+      startReportScheduler(user.uid, tasks, habits, currentStreak);
+    }
+    return () => {
+      stopReportScheduler();
+    };
+  }, [user, tasks, habits, currentStreak]);
 
   // ─── Memoized callbacks — no new function refs on every render ───────────────
   const handleCloseSidebar = useCallback(() => setSidebarOpen(false), []);

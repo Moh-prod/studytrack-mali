@@ -21,6 +21,7 @@ function JournalTimeline({ entries, selectedId, onSelect }) {
   const groups = useMemo(() => {
     const daily = entries.filter((e) => e.type === 'daily');
     const weekly = entries.filter((e) => e.type === 'weekly');
+    const monthly = entries.filter((e) => e.type === 'monthly');
 
     // 7 derniers jours
 
@@ -32,7 +33,7 @@ function JournalTimeline({ entries, selectedId, onSelect }) {
     // Semaines (sans les 7 derniers jours)
     const olderDaily = daily.filter((e) => !last7.includes(e.periodStart));
 
-    return { recentDaily, weekly, olderDaily };
+    return { recentDaily, weekly, monthly, olderDaily };
   }, [entries]);
 
   const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
@@ -166,6 +167,18 @@ function JournalTimeline({ entries, selectedId, onSelect }) {
             label="Semaines"
           />
           {groups.weekly.map(renderEntry)}
+        </>
+      )}
+
+      {/* Rapports mensuels */}
+      {groups.monthly.length > 0 && (
+        <>
+          <Divider sx={{ my: 1.5, mx: 2, opacity: 0.4 }} />
+          <SectionHeader
+            icon={<CalendarMonthRounded sx={{ fontSize: '0.85rem', color: 'text.secondary' }} />}
+            label="Mois"
+          />
+          {groups.monthly.map(renderEntry)}
         </>
       )}
 

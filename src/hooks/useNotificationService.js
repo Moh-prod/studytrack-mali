@@ -1,13 +1,10 @@
 import { useEffect, useCallback } from 'react';
+import { sendNotification, initNotifications } from '../utils/nativeNotifications';
 
 export default function useNotificationService(tasks, updateTask) {
-  // Request notification permissions
+  // Initialize notification system (native + web)
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'Notification' in window) {
-      if (Notification.permission === 'default') {
-        Notification.requestPermission();
-      }
-    }
+    initNotifications();
   }, []);
 
   // Web Audio API procedural task chime generator
@@ -45,19 +42,16 @@ export default function useNotificationService(tasks, updateTask) {
     }
   }, []);
 
-  // Show system notification
+  // Show notification using the unified native service
   const triggerNotification = useCallback((title, body) => {
-    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-      try {
-        new Notification(title, {
-          body,
-          icon: '/logo.svg',
-          tag: 'studytrack-reminder'
-        });
-      } catch (e) {
-        console.warn("Could not display task notification: ", e);
-      }
-    }
+    sendNotification({
+      title,
+      body,
+      tag: 'studytrack-reminder',
+      sound: true,
+    }).catch((e) => {
+      console.warn("Could not display task notification: ", e);
+    });
   }, []);
 
   // Effect to scan tasks periodically

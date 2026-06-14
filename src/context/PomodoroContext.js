@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { initAlarmSound, playAlarm, stopAlarm } from '../utils/alarmSound';
+import { sendAlarmNotification, initNotifications } from '../utils/nativeNotifications';
 
 const PomodoroContext = createContext();
 
@@ -27,6 +28,7 @@ export function PomodoroProvider({ children }) {
   const breakMinRef = useRef(breakMin);
   const longBreakMinRef = useRef(longBreakMin);
   const originalTitleRef = useRef(document.title);
+  const alarmTimeoutRef = useRef(null);
 
   // Keep refs in sync with state (needed for Worker message handler)
   useEffect(() => { isWorkRef.current = isWork; }, [isWork]);
@@ -40,13 +42,9 @@ export function PomodoroProvider({ children }) {
   useEffect(() => { localStorage.setItem('pomo_breakMin', breakMin); }, [breakMin]);
   useEffect(() => { localStorage.setItem('pomo_longBreakMin', longBreakMin); }, [longBreakMin]);
 
-  // ─── Request notification permissions ─────────────────────────────
+  // ─── Initialize notifications (native + web) ─────────────────────
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'Notification' in window) {
-      if (Notification.permission === 'default') {
-        Notification.requestPermission();
-      }
-    }
+    initNotifications();
   }, []);
 
   // ─── Pre-generate alarm sound on mount ────────────────────────────
@@ -56,33 +54,12 @@ export function PomodoroProvider({ children }) {
     });
   }, []);
 
-  // ─── System OS notification (enhanced) ────────────────────────────
+  // ─── Trigger notification (native + in-app) ──────────────────────
   const triggerSystemNotification = useCallback((title, body) => {
-    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-      try {
-        const notif = new Notification(title, {
-          body,
-          icon: '/logo192.png',
-          badge: '/logo192.png',
-          tag: 'studytrack-pomodoro',
-          renotify: true,
-          requireInteraction: true,
-          silent: true, // We handle sound ourselves
-          vibrate: [200, 100, 200, 100, 300],
-        });
-
-        // Bring the tab to focus when user clicks the notification
-        notif.onclick = () => {
-          window.focus();
-          notif.close();
-        };
-
-        // Auto-close after 30s
-        setTimeout(() => notif.close(), 30000);
-      } catch (e) {
-        console.warn('Could not display notification:', e);
-      }
-    }
+    // Use native notification service (works on Android + web)
+    sendAlarmNotification({ title, body }).catch((e) => {
+      console.warn('Notification error:', e);
+    });
   }, []);
 
   // ─── Show in-app toast notification ───────────────────────────────
@@ -93,14 +70,22 @@ export function PomodoroProvider({ children }) {
   const dismissNotification = useCallback(() => {
     setNotification(prev => ({ ...prev, visible: false }));
     stopAlarm();
+    // Clear alarm auto-stop timeout
+    if (alarmTimeoutRef.current) {
+      clearTimeout(alarmTimeoutRef.current);
+      alarmTimeoutRef.current = null;
+    }
   }, []);
 
   // ─── Handle timer completion ──────────────────────────────────────
   const handleTimerComplete = useCallback(() => {
     setRunning(false);
 
-    // Play professional alarm sound (3 loops)
+    // Play professional alarm sound (3 loops) — auto-stop after 15 seconds
     playAlarm(3);
+    alarmTimeoutRef.current = setTimeout(() => {
+      stopAlarm();
+    }, 15000); // 15 seconds max alarm duration
 
     if (isWorkRef.current) {
       const nextSessions = sessionsRef.current + 1;
@@ -270,6 +255,15 @@ export function PomodoroProvider({ children }) {
       workerRef.current?.postMessage({ command: 'sync', timeLeft: min * 60 });
     }
   }, [running, isWork, sessions]);
+
+  // ─── Cleanup alarm timeout on unmount ─────────────────────────────
+  useEffect(() => {
+    return () => {
+      if (alarmTimeoutRef.current) {
+        clearTimeout(alarmTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // ─── Context Provider ─────────────────────────────────────────────
   return (
