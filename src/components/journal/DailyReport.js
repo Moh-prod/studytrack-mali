@@ -5,13 +5,14 @@ import {
 } from '@mui/material';
 import {
   CheckCircleRounded, WarningAmberRounded, RadioButtonUncheckedRounded,
-  AssignmentTurnedInRounded, FitnessCenterRounded, TimerRounded, EditNoteRounded,
+  AssignmentTurnedInRounded, FitnessCenterRounded, TimerRounded, EditNoteRounded, AutoAwesomeRounded
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductivityScore from './ProductivityScore';
 import MoodSelector from './MoodSelector';
 import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
+import { generateReportInsights } from '../../utils/aiService';
 dayjs.locale('fr');
 
 const CATEGORY_EMOJI = {
@@ -43,6 +44,7 @@ function DailyReport({ entry, habits, onUpdate }) {
   const [tab, setTab] = useState(0);
   const [note, setNote] = useState(entry?.personalNote || '');
   const [savingNote, setSavingNote] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
 
   const isToday = entry?.periodStart === dayjs().format('YYYY-MM-DD');
 
@@ -57,6 +59,16 @@ function DailyReport({ entry, habits, onUpdate }) {
     await onUpdate(entry.id, { personalNote: note });
     setSavingNote(false);
   }, [onUpdate, entry?.id, note, entry?.personalNote]);
+
+  const handleGenerateInsights = async () => {
+    if (!onUpdate || !entry?.id || analyzing) return;
+    setAnalyzing(true);
+    const insights = await generateReportInsights(entry);
+    if (insights) {
+      await onUpdate(entry.id, { aiInsights: insights });
+    }
+    setAnalyzing(false);
+  };
 
   if (!entry) return null;
 
@@ -357,6 +369,59 @@ function DailyReport({ entry, habits, onUpdate }) {
               )}
             </Box>
           </TabPanel>
+        </CardContent>
+      </Card>
+
+      {/* Analyse IA */}
+      <Card sx={{ mt: 3, border: `1px solid ${alpha('#06B6D4', 0.3)}`, background: alpha('#06B6D4', 0.03) }}>
+        <CardContent sx={{ p: 2.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+            <Box sx={{ width: 32, height: 32, borderRadius: 2, background: 'linear-gradient(135deg, #7C3AED, #06B6D4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF' }}>
+              <AutoAwesomeRounded fontSize="small" />
+            </Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+              Analyse IA de la journée
+            </Typography>
+          </Box>
+          
+          {entry.aiInsights ? (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'text.secondary', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                "{entry.aiInsights}"
+              </Typography>
+            </motion.div>
+          ) : (
+            <Box sx={{ textAlign: 'center', py: 2 }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+                Génère un résumé personnalisé de ta journée avec des conseils d'amélioration.
+              </Typography>
+              <Box
+                component="button"
+                onClick={handleGenerateInsights}
+                disabled={analyzing}
+                sx={{
+                  background: 'linear-gradient(135deg, #7C3AED, #06B6D4)',
+                  color: '#FFF',
+                  border: 'none',
+                  borderRadius: 3,
+                  px: 3,
+                  py: 1.2,
+                  fontWeight: 600,
+                  cursor: analyzing ? 'default' : 'pointer',
+                  opacity: analyzing ? 0.7 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  mx: 'auto',
+                  transition: 'transform 0.2s',
+                  '&:hover': { transform: analyzing ? 'none' : 'scale(1.05)' }
+                }}
+              >
+                {analyzing ? <AutoAwesomeRounded sx={{ animation: 'spin 1.5s linear infinite' }} fontSize="small" /> : <AutoAwesomeRounded fontSize="small" />}
+                {analyzing ? 'Analyse en cours...' : 'Générer l\'analyse'}
+              </Box>
+            </Box>
+          )}
         </CardContent>
       </Card>
     </Box>

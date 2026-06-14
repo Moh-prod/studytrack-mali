@@ -5,6 +5,7 @@ import StatsCards from './StatsCards';
 import ProgressChart from './ProgressChart';
 import StreakTracker from './StreakTracker';
 import MotivationalQuote from './MotivationalQuote';
+import AIInsightsCard from './AIInsightsCard';
 import useStreak from '../../hooks/useStreak';
 import { getToday, isOverdue } from '../../utils/dateUtils';
 import { motion } from 'framer-motion';
@@ -68,6 +69,9 @@ function Dashboard({ tasks, habits }) {
           activeDates={activeDates}
         />
       </Box>
+
+      {/* AI Insights Card */}
+      <AIInsightsCard tasks={tasks} habits={habits} streak={currentStreak} />
 
       {/* Quick Summary */}
       <motion.div

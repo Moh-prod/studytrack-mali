@@ -10,6 +10,7 @@ import { AnimatePresence } from 'framer-motion';
 // Layout — always loaded (small, needed immediately)
 import Sidebar from './components/layout/Sidebar';
 import AppNavbar from './components/layout/AppNavbar';
+import AIChatFAB from './components/ai/AIChatFAB';
 
 // Context & Services
 import { PomodoroProvider } from './context/PomodoroContext';
@@ -166,6 +167,7 @@ export default function App() {
                 </Routes>
               </Suspense>
             </AnimatePresence>
+            <AIChatFAB tasks={tasks} habits={habits} streak={currentStreak} />
           </Box>
         </Box>
       </PomodoroProvider>
