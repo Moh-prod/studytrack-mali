@@ -59,6 +59,21 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
     }
 
+    match /transactions/{transactionId} {
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      allow create: if isCreatingAsOwner();
+      allow update: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
+    }
+
+    // ── Sessions Pomodoro ───────────────────────────────────────────────────
+    match /pomodoro_sessions/{sessionId} {
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      allow create: if isCreatingAsOwner();
+      allow update: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
+    }
+
     // ── Newsletter ───────────────────────────────────────────────────────────
     // Écriture ouverte pour permettre l'inscription, lecture réservée aux admins
     match /newsletter_subscribers/{docId} {

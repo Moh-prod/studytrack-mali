@@ -52,6 +52,8 @@ const ExpenseTracker = lazy(
   () => import("./components/expenses/ExpenseTracker"),
 );
 const JournalPage = lazy(() => import("./components/journal/JournalPage"));
+const NotFoundPage = lazy(() => import("./components/common/NotFoundPage"));
+import ErrorBoundary from "./components/common/ErrorBoundary";
 
 // Minimal page-level loading fallback
 const PageFallback = () => (
@@ -97,19 +99,21 @@ function AppShell({ user, darkMode, setDarkMode, currentStreak }) {
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <AnimatePresence mode="wait">
             <Suspense fallback={<PageFallback />}>
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/tasks" element={<TasksPage user={user} />} />
-                <Route path="/habits" element={<HabitTracker user={user} />} />
-                <Route path="/pomodoro" element={<PomodoroTimer />} />
-                <Route
-                  path="/expenses"
-                  element={<ExpenseTracker user={user} />}
-                />
-                <Route path="/notes" element={<NotesPage user={user} />} />
-                <Route path="/journal" element={<JournalPage user={user} />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+              <ErrorBoundary>
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/tasks" element={<TasksPage user={user} />} />
+                  <Route path="/habits" element={<HabitTracker user={user} />} />
+                  <Route path="/pomodoro" element={<PomodoroTimer />} />
+                  <Route
+                    path="/expenses"
+                    element={<ExpenseTracker user={user} />}
+                  />
+                  <Route path="/notes" element={<NotesPage user={user} />} />
+                  <Route path="/journal" element={<JournalPage user={user} />} />
+                  <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+              </ErrorBoundary>
             </Suspense>
           </AnimatePresence>
           <AIChatFAB streak={currentStreak} />

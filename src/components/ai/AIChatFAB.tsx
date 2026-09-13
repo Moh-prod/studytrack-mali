@@ -362,6 +362,7 @@ export default function AIChatFAB({ streak }) {
             }}
           >
             <Fab
+              aria-label="Ouvrir le Coach IA"
               onClick={() => setIsOpen(true)}
               sx={{
                 background: "linear-gradient(135deg, #7C3AED, #06B6D4)",

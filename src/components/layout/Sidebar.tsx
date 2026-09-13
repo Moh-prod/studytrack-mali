@@ -119,6 +119,7 @@ function SidebarContent({ onClose, isMobile }) {
         </Box>
         {isMobile && (
           <IconButton
+            aria-label="Fermer le menu de navigation"
             onClick={onClose}
             size="small"
             sx={{
@@ -240,7 +241,7 @@ function SidebarContent({ onClose, isMobile }) {
           variant="caption"
           sx={{ color: "text.secondary", opacity: 0.5, fontSize: "0.7rem" }}
         >
-          StudyTrack Mali © 2026
+          StudyTrack Mali © {new Date().getFullYear()}
         </Typography>
       </Box>
     </Box>

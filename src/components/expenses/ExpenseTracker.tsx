@@ -26,6 +26,7 @@ import {
   DialogContent,
   DialogActions,
   DialogContentText,
+  TextField,
 } from "@mui/material";
 import {
   AddRounded,
@@ -75,16 +76,23 @@ export default function ExpenseTracker({ user }) {
 
   // Budget
   const [budget, setBudget] = useState(100000); // Default budget
+  const [budgetDialogOpen, setBudgetDialogOpen] = useState(false);
+  const [budgetInput, setBudgetInput] = useState("");
   useEffect(() => {
     const saved = localStorage.getItem("monthlyBudget");
     if (saved) setBudget(Number(saved));
   }, []);
   const handleBudgetChange = () => {
-    const val = prompt("Entrez votre budget mensuel:", budget);
-    if (val && !isNaN(val)) {
-      setBudget(Number(val));
-      localStorage.setItem("monthlyBudget", val);
+    setBudgetInput(String(budget));
+    setBudgetDialogOpen(true);
+  };
+  const handleBudgetSave = () => {
+    const val = Number(budgetInput);
+    if (budgetInput && !isNaN(val) && val > 0) {
+      setBudget(val);
+      localStorage.setItem("monthlyBudget", String(val));
     }
+    setBudgetDialogOpen(false);
   };
 
   // Modal State for Add/Edit
@@ -860,6 +868,39 @@ export default function ExpenseTracker({ user }) {
           <Button onClick={() => setDeleteConfirmOpen(false)}>Annuler</Button>
           <Button onClick={handleDelete} color="error" variant="contained">
             Supprimer
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Budget Dialog — replaces native prompt() */}
+      <Dialog
+        open={budgetDialogOpen}
+        onClose={() => setBudgetDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          💰 Budget mensuel
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            Définis ton budget mensuel pour suivre tes dépenses.
+          </DialogContentText>
+          <TextField
+            autoFocus
+            fullWidth
+            type="number"
+            label="Budget (FCFA)"
+            value={budgetInput}
+            onChange={(e) => setBudgetInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleBudgetSave()}
+            inputProps={{ min: 0 }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setBudgetDialogOpen(false)}>Annuler</Button>
+          <Button onClick={handleBudgetSave} variant="contained" sx={{ borderRadius: 3 }}>
+            Sauvegarder
           </Button>
         </DialogActions>
       </Dialog>

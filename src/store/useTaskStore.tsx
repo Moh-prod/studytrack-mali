@@ -35,6 +35,9 @@ const useTaskStore = create((set, get) => ({
   tasks: [],
   loading: true,
   unsub: null,
+  error: null,
+
+  clearError: () => set({ error: null }),
 
   initTasks: (user) => {
     // Cleanup previous subscription if exists
@@ -82,7 +85,7 @@ const useTaskStore = create((set, get) => ({
       });
     } catch (error) {
       console.error("Error adding task:", error);
-      alert("Erreur lors de l'ajout de la tâche : " + error.message);
+      set({ error: "Erreur lors de l'ajout de la tâche. Vérifie ta connexion." });
     }
   },
 

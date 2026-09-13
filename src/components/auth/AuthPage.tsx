@@ -415,23 +415,26 @@ export default function AuthPage() {
                   sx={{ color: "rgba(255,255,255,0.5)" }}
                 >
                   {isLogin ? "Pas encore de compte ?" : "Déjà un compte ?"}
-                  <Box
-                    component="span"
+                  <Button
+                    variant="text"
                     onClick={() => {
                       setIsLogin(!isLogin);
                       setError("");
                     }}
                     sx={{
-                      ml: 1,
+                      ml: 0.5,
                       color: "#A78BFA",
-                      cursor: "pointer",
                       fontWeight: 600,
-                      "&:hover": { color: "#7C3AED" },
+                      textTransform: "none",
+                      padding: 0,
+                      minWidth: "auto",
+                      verticalAlign: "baseline",
+                      "&:hover": { color: "#7C3AED", backgroundColor: "transparent" },
                       transition: "color 0.2s",
                     }}
                   >
                     {isLogin ? "Créer un compte" : "Se connecter"}
-                  </Box>
+                  </Button>
                 </Typography>
               </Box>
             </Box>

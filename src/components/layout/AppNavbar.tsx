@@ -71,6 +71,7 @@ export default function AppNavbar({
           {isMobile && (
             <IconButton
               edge="start"
+              aria-label="Ouvrir le menu de navigation"
               onClick={onMenuClick}
               sx={{ color: "text.primary" }}
             >
@@ -148,6 +149,7 @@ export default function AppNavbar({
           {/* Dark Mode Toggle */}
           <Tooltip title={darkMode ? "Mode clair" : "Mode sombre"}>
             <IconButton
+              aria-label={darkMode ? "Basculer en mode clair" : "Basculer en mode sombre"}
               onClick={() => setDarkMode(!darkMode)}
               sx={{ color: "text.secondary" }}
             >

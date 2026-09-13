@@ -63,6 +63,8 @@ function TasksPage({ user }) {
   const updateTask = useTaskStore((state) => state.updateTask);
   const deleteTask = useTaskStore((state) => state.deleteTask);
   const toggleTask = useTaskStore((state) => state.toggleTask);
+  const storeError = useTaskStore((state) => state.error);
+  const clearError = useTaskStore((state) => state.clearError);
 
   const [view, setView] = useState("list");
   const [search, setSearch] = useState("");
@@ -364,6 +366,21 @@ function TasksPage({ user }) {
         onClose={handleCloseSnack}
         message={snack.msg}
         TransitionComponent={Transition}
+      />
+
+      {/* Store error Snackbar */}
+      <Snackbar
+        open={Boolean(storeError)}
+        autoHideDuration={5000}
+        onClose={clearError}
+        message={storeError}
+        TransitionComponent={Transition}
+        sx={{
+          "& .MuiSnackbarContent-root": {
+            backgroundColor: "#EF4444",
+            fontWeight: 600,
+          },
+        }}
       />
     </PageContainer>
   );

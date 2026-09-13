@@ -237,7 +237,7 @@ function TaskCard({ task, onToggle, onEdit, onDelete, onUpdateTask }) {
                     <Box sx={{ mt: 1 }}>
                       {subtasks.map((sub, i) => (
                         <Box
-                          key={i}
+                          key={sub.id || `${sub.title}-${i}`}
                           sx={{
                             display: "flex",
                             alignItems: "center",

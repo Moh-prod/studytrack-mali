@@ -174,7 +174,8 @@ function Dashboard() {
 
   const handleSubscribe = async (e) => {
     e.preventDefault();
-    if (!email || !email.includes("@")) return;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email.trim())) return;
     setSubmitting(true);
     try {
       await addDoc(collection(db, "newsletter_subscribers"), {

@@ -10,7 +10,7 @@
  * - Skip caching for API calls (Firebase, etc.)
  */
 
-const CACHE_NAME = 'studytrack-v1';
+const CACHE_NAME = 'studytrack-v1.1.0';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

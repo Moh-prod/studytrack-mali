@@ -86,6 +86,18 @@ export const getTheme = (mode) => {
               ? "radial-gradient(ellipse at 20% 50%, rgba(124,58,237,0.08) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(6,182,212,0.06) 0%, transparent 50%)"
               : "radial-gradient(ellipse at 20% 50%, rgba(124,58,237,0.04) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(6,182,212,0.03) 0%, transparent 50%)",
           },
+          "*:focus-visible": {
+            outline: "2px solid #7C3AED",
+            outlineOffset: "2px",
+          },
+          "@media (prefers-reduced-motion: reduce)": {
+            "*, *::before, *::after": {
+              animationDuration: "0.01ms !important",
+              animationIterationCount: "1 !important",
+              transitionDuration: "0.01ms !important",
+              scrollBehavior: "auto !important",
+            },
+          },
         },
       },
       MuiCard: {

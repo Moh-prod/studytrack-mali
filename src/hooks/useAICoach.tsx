@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef } from "react";
-import { chatWithCoach } from "../utils/aiService";
 
 /**
  * useAICoach — Hook personnalisé pour le chatbot Coach IA.

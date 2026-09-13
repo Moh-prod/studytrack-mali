@@ -47,7 +47,8 @@ function PageContainer({ children, title, subtitle }) {
           pb: { xs: 8, md: 4 }, // extra bottom padding on mobile for FABs
           minHeight: "100vh",
           maxWidth: 1240,
-          willChange: "transform",
+          width: isMobile ? "100%" : `calc(100% - ${SIDEBAR_WIDTH}px)`,
+          boxSizing: "border-box",
         }}
       >
         {(title || subtitle) && (
