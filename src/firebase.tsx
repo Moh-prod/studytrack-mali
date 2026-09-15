@@ -12,11 +12,20 @@ import {
  * Les clés API Firebase côté client sont publiques par nature mais doivent
  * être protégées par des Firestore Security Rules strictes (voir firestore.rules).
  */
+// Vérification des variables d'environnement au build
+const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
+
+if (!apiKey) {
+  console.error(
+    "⚠️ VITE_FIREBASE_API_KEY n'est pas définie lors du build ! Les variables d'environnement doivent être configurées sur votre plateforme d'hébergement (Vercel, Netlify, Hostinger, etc.).",
+  );
+}
+
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  apiKey: apiKey || "",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
   appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
 };

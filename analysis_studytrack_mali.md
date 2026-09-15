@@ -54,9 +54,9 @@ Dans [firebase.tsx](file:///c:/Users/mnitu/Downloads/studytrack-mali-main/studyt
 
 ```javascript
 const firebaseConfig = {
-  apiKey: "AIzaSyCRXQYiWlIaZi3Mmkf1Zqy2TVfCCL8IdaA",
-  authDomain: "studytrack-mali.firebaseapp.com",
-  projectId: "studytrack-mali",
+  apiKey: "AIzaSy_YOUR_FIREBASE_API_KEY",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
 };
 ```
 
