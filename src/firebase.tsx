@@ -5,6 +5,12 @@ import {
   persistentLocalCache,
   persistentMultipleTabManager,
 } from "firebase/firestore";
+import {
+  getAnalytics,
+  isSupported,
+  logEvent,
+  Analytics,
+} from "firebase/analytics";
 
 /**
  * Configuration Firebase — les valeurs sont lues depuis les variables d'environnement
@@ -28,6 +34,7 @@ const firebaseConfig = {
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
   appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-GSM74L3EPE",
 };
 
 const app = initializeApp(firebaseConfig);
@@ -45,3 +52,29 @@ export const db = initializeFirestore(app, {
     tabManager: persistentMultipleTabManager(),
   }),
 });
+
+/**
+ * Firebase Analytics
+ * Initialisation asynchrone sécurisée vérifiant si l'environnement supporte Analytics.
+ */
+export let analytics: Analytics | null = null;
+
+isSupported().then((supported) => {
+  if (supported) {
+    analytics = getAnalytics(app);
+  }
+});
+
+/**
+ * Fonction utilitaire globale pour envoyer des événements de suivi.
+ * @param eventName Nom de l'événement (ex: 'study_session_start', 'task_created')
+ * @param eventParams Paramètres optionnels de l'événement
+ */
+export const trackEvent = (
+  eventName: string,
+  eventParams?: Record<string, any>,
+) => {
+  if (analytics) {
+    logEvent(analytics, eventName, eventParams);
+  }
+};
